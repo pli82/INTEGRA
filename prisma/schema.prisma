@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ANGAJAT
+  ADMINISTRATOR
+}
+
+enum EnrollmentStatus {
+  NEINCEPUT
+  IN_CURS
+  PROMOVAT
+  RESPINS
+}
+
+model Structura {
+  id        String     @id @default(cuid())
+  nume      String     @unique
+  angajati  Angajat[]
+}
+
+model Angajat {
+  id                 String        @id @default(cuid())
+  nume               String
+  prenume            String
+  email              String?       @unique
+  functie            String
+  role               Role          @default(ANGAJAT)
+  structura          Structura     @relation(fields: [structuraId], references: [id])
+  structuraId        String
+  consimtamantGDPR   Boolean       @default(false)
+  consimtamantData   DateTime?
+  enrollments        Enrollment[]
+  testResults        TestResult[]
+  createdAt          DateTime      @default(now())
+}
+
+model Curs {
+  id           String        @id @default(cuid())
+  titlu        String
+  descriere    String?
+  icon         String        @default("shield")
+  ordine       Int           @default(0)
+  lectii       Lectie[]
+  enrollments  Enrollment[]
+  teste        Test[]
+  createdAt    DateTime      @default(now())
+}
+
+model Lectie {
+  id        String   @id @default(cuid())
+  curs      Curs     @relation(fields: [cursId], references: [id])
+  cursId    String
+  titlu     String
+  ordine    Int      @default(0)
+  durataMin Int      @default(10)
+}
+
+model Enrollment {
+  id            String            @id @default(cuid())
+  angajat       Angajat           @relation(fields: [angajatId], references: [id])
+  angajatId     String
+  curs          Curs              @relation(fields: [cursId], references: [id])
+  cursId        String
+  status        EnrollmentStatus  @default(NEINCEPUT)
+  lectiiFinal   Int               @default(0)
+  progresPct    Int               @default(0)
+  actualizatLa  DateTime          @updatedAt
+
+  @@unique([angajatId, cursId])
+}
+
+model Test {
+  id            String        @id @default(cuid())
+  curs          Curs          @relation(fields: [cursId], references: [id])
+  cursId        String
+  titlu         String
+  durataMin     Int           @default(15)
+  nrIntrebari   Int           @default(20)
+  dataLimita    DateTime?
+  rezultate     TestResult[]
+}
+
+model TestResult {
+  id         String    @id @default(cuid())
+  test       Test      @relation(fields: [testId], references: [id])
+  testId     String
+  angajat    Angajat   @relation(fields: [angajatId], references: [id])
+  angajatId  String
+  scor       Int
+  dinTotal   Int       @default(10)
+  promovat   Boolean
+  susTinutLa DateTime  @default(now())
+}
+
+model ActivitateLog {
+  id        String   @id @default(cuid())
+  angajatId String
+  mesaj     String
+  createdAt DateTime @default(now())
+}
