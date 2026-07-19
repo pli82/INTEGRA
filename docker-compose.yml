@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    container_name: smam-instruire
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # Poți sări peste acest serviciu și pune direct DATABASE_URL către Neon în .env,
+  # dacă preferi baza de date gestionată în loc de Postgres local pe serverul AEP.
+  db:
+    image: postgres:16-alpine
+    container_name: smam-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smam
+      POSTGRES_PASSWORD: schimba-parola-aici
+      POSTGRES_DB: smam_instruire
+    volumes:
+      - smam_db_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+volumes:
+  smam_db_data:
