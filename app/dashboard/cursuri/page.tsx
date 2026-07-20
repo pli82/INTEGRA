@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ShieldCheck, Settings, AlertTriangle, ChevronRight } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ProgressBar } from "@/components/ui";
@@ -7,6 +8,7 @@ const FALLBACK = {
   angajat: { nume: "Andrei Popescu", functie: "Consilier" },
   cursuri: [
     {
+      id: "fallback-1",
       titlu: "Integritate și prevenirea mitei",
       descriere: "Principii de integritate, cadrul legal și studii de caz.",
       icon: "shield",
@@ -22,6 +24,7 @@ const FALLBACK = {
       ],
     },
     {
+      id: "fallback-2",
       titlu: "Sistemul de management anti-mită",
       descriere: "Cerințele SMAM conform ISO 37001:2025.",
       icon: "settings",
@@ -38,6 +41,7 @@ const FALLBACK = {
       ],
     },
     {
+      id: "fallback-3",
       titlu: "Raportarea incidentelor",
       descriere: "Canale de raportare și protecția avertizorilor.",
       icon: "alert",
@@ -65,6 +69,7 @@ async function getData() {
     if (!angajat) return FALLBACK;
 
     const cursuri = angajat.enrollments.map((e) => ({
+      id: e.curs.id,
       titlu: e.curs.titlu,
       descriere: e.curs.descriere ?? "",
       icon: e.curs.icon,
@@ -131,9 +136,12 @@ export default async function CursurilePage() {
                     <p className="mt-1 text-sm text-slate-500">{c.descriere}</p>
                   </div>
                 </div>
-                <button className="flex shrink-0 items-center gap-1 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+                <Link
+                  href={`/dashboard/cursuri/${c.id}`}
+                  className="flex shrink-0 items-center gap-1 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
+                >
                   {c.pct > 0 ? "Continuă" : "Începe"} <ChevronRight size={14} />
-                </button>
+                </Link>
               </div>
 
               <div className="mt-4 flex items-center gap-3">
