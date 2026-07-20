@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Video, FileText, Presentation, Trash2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
@@ -6,31 +5,40 @@ import { ProgressBar } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { adaugaMaterial, stergeMaterial, marcheazaVizualizat } from "@/app/dashboard/actions";
 
+const FALLBACK_ANGAJAT = { nume: "Andrei Popescu", functie: "Consilier", fotoUrl: null as string | null };
+
 async function getData(cursId: string) {
-  const angajat = await prisma.angajat.findFirst({
-    where: { role: "ANGAJAT" },
-    include: { structura: true },
-  });
-  if (!angajat) return null;
+  try {
+    const [angajat, curs] = await Promise.all([
+      prisma.angajat.findFirst({ where: { role: "ANGAJAT" } }),
+      prisma.curs.findUnique({
+        where: { id: cursId },
+        include: {
+          lectii: { orderBy: { ordine: "asc" } },
+          materiale: { orderBy: { createdAt: "desc" } },
+        },
+      }),
+    ]);
 
-  const curs = await prisma.curs.findUnique({
-    where: { id: cursId },
-    include: {
-      lectii: { orderBy: { ordine: "asc" } },
-      materiale: { orderBy: { createdAt: "desc" } },
-    },
-  });
-  if (!curs) return null;
+    if (!curs) return null;
 
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { angajatId_cursId: { angajatId: angajat.id, cursId: curs.id } },
-  });
+    const enrollment = angajat
+      ? await prisma.enrollment.findUnique({
+          where: { angajatId_cursId: { angajatId: angajat.id, cursId: curs.id } },
+        })
+      : null;
 
-  return {
-    angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, fotoUrl: angajat.fotoUrl },
-    curs,
-    enrollment,
-  };
+    return {
+      angajat: angajat
+        ? { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, fotoUrl: angajat.fotoUrl }
+        : FALLBACK_ANGAJAT,
+      curs,
+      enrollment,
+    };
+  } catch (e) {
+    console.error("getData error:", e);
+    return null;
+  }
 }
 
 const iconForTip = (tip: string) => {
@@ -48,7 +56,19 @@ const labelForTip = (tip: string) => {
 export default async function CursDetaliuPage({ params }: { params: Promise<{ cursId: string }> }) {
   const { cursId } = await params;
   const data = await getData(cursId);
-  if (!data) return notFound();
+
+  if (!data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-slate-500">Cursul nu a putut fi încărcat. Încearcă din nou.</p>
+          <Link href="/dashboard/cursuri" className="mt-4 inline-block text-sm text-blue-700">
+            ← Înapoi la cursuri
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const { angajat, curs, enrollment } = data;
   const vizualizat = enrollment?.vizualizat ?? false;
@@ -110,26 +130,14 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
               ) : (
                 <ul className="flex flex-col gap-2">
                   {curs.materiale.map((m) => (
-                    <li
-                      key={m.id}
-                      className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3"
-                    >
-                      
-                        href={m.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 hover:underline"
-                      >
+                    <li key={m.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:underline">
                         {iconForTip(m.tip)}
                         <span className="text-sm text-slate-700">{m.titlu}</span>
                         <span className="text-xs text-slate-400">({labelForTip(m.tip)})</span>
                       </a>
                       <form action={stergeMaterial.bind(null, m.id, curs.id)}>
-                        <button
-                          type="submit"
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"
-                          title="Șterge materialul"
-                        >
+                        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600" title="Șterge materialul">
                           <Trash2 size={14} />
                         </button>
                       </form>
@@ -143,58 +151,31 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
               <h2 className="mb-4 text-base font-medium text-slate-900">Adaugă material nou</h2>
               <form action={adaugaMaterial} className="flex flex-col gap-4">
                 <input type="hidden" name="cursId" value={curs.id} />
-
                 <div>
                   <label className="mb-1 block text-sm text-slate-600">Tip material</label>
-                  <select
-                    name="tip"
-                    defaultValue="VIDEO"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                  >
+                  <select name="tip" defaultValue="VIDEO" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
                     <option value="VIDEO">Video (link)</option>
                     <option value="PDF">PDF</option>
                     <option value="PPTX">Prezentare (PPT/PPTX)</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="mb-1 block text-sm text-slate-600">Titlu</label>
-                  <input
-                    name="titlu"
-                    placeholder="ex. Prezentare introductivă SMAM"
-                    required
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
-                  />
+                  <input name="titlu" placeholder="ex. Prezentare introductivă SMAM" required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400" />
                 </div>
-
                 <div>
                   <label className="mb-1 block text-sm text-slate-600">
                     Link video <span className="text-slate-400">(completează doar dacă tipul e Video)</span>
                   </label>
-                  <input
-                    name="videoUrl"
-                    type="url"
-                    placeholder="https://..."
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
-                  />
+                  <input name="videoUrl" type="url" placeholder="https://..." className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400" />
                 </div>
-
                 <div>
                   <label className="mb-1 block text-sm text-slate-600">
                     Fișier <span className="text-slate-400">(completează doar pentru PDF/Prezentare, max 8MB)</span>
                   </label>
-                  <input
-                    name="fisier"
-                    type="file"
-                    accept=".pdf,.ppt,.pptx"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                  />
+                  <input name="fisier" type="file" accept=".pdf,.ppt,.pptx" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
                 </div>
-
-                <button
-                  type="submit"
-                  className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
-                >
+                <button type="submit" className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
                   Adaugă materialul
                 </button>
               </form>
@@ -214,10 +195,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
                     Testul pentru acest curs se deblochează după ce marchezi cursul ca vizualizat.
                   </p>
                   <form action={marcheazaAction}>
-                    <button
-                      type="submit"
-                      className="w-full rounded-lg bg-blue-700 py-2 text-sm font-medium text-white hover:bg-blue-800"
-                    >
+                    <button type="submit" className="w-full rounded-lg bg-blue-700 py-2 text-sm font-medium text-white hover:bg-blue-800">
                       Am vizualizat cursul
                     </button>
                   </form>
