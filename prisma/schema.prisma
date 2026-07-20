@@ -54,6 +54,7 @@ model Curs {
   ordine       Int           @default(0)
   lectii       Lectie[]
   materiale    Material[]
+  intrebari    Intrebare[]
   enrollments  Enrollment[]
   teste        Test[]
   createdAt    DateTime      @default(now())
@@ -116,6 +117,22 @@ model Material {
   createdAt DateTime    @default(now())
 }
 
+model Intrebare {
+  id       String    @id @default(cuid())
+  curs     Curs      @relation(fields: [cursId], references: [id])
+  cursId   String
+  enunt    String
+  ordine   Int       @default(0)
+  optiuni  Optiune[]
+}
+
+model Optiune {
+  id          String    @id @default(cuid())
+  intrebare   Intrebare @relation(fields: [intrebareId], references: [id])
+  intrebareId String
+  text        String
+  corecta     Boolean   @default(false)
+}
 model ActivitateLog {
   id        String   @id @default(cuid())
   angajatId String
