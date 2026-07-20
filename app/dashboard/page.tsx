@@ -184,7 +184,7 @@ export default async function DashboardPage() {
           <div className="col-span-2">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-medium text-slate-900">Cursurile mele</h3>
-              <a href="/dashboard/cursuri" className="text-sm text-blue-700">Vezi toate ›</a>
+              <Link href="/dashboard/cursuri" className="text-sm text-blue-700">Vezi toate ›</Link>
             </div>
             <div className="grid grid-cols-3 gap-4">
               {data.cursuri.map((c) => (
@@ -258,9 +258,9 @@ export default async function DashboardPage() {
                   </li>
                 ))}
               </ul>
-              <a href="/dashboard/progres" className="mt-3 inline-block text-sm text-blue-700">
+              <Link href="/dashboard/progres" className="mt-3 inline-block text-sm text-blue-700">
                 Vezi toată activitatea ›
-              </a>
+              </Link>
             </div>
           </div>
         </div>

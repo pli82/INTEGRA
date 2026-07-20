@@ -18,6 +18,11 @@ enum EnrollmentStatus {
   RESPINS
 }
 
+enum MaterialTip {
+  VIDEO
+  PDF
+  PPTX
+}
 model Structura {
   id        String     @id @default(cuid())
   nume      String     @unique
@@ -48,6 +53,7 @@ model Curs {
   icon         String        @default("shield")
   ordine       Int           @default(0)
   lectii       Lectie[]
+  materiale    Material[]
   enrollments  Enrollment[]
   teste        Test[]
   createdAt    DateTime      @default(now())
@@ -69,6 +75,7 @@ model Enrollment {
   curs          Curs              @relation(fields: [cursId], references: [id])
   cursId        String
   status        EnrollmentStatus  @default(NEINCEPUT)
+  vizualizat    Boolean           @default(false)
   lectiiFinal   Int               @default(0)
   progresPct    Int               @default(0)
   actualizatLa  DateTime          @updatedAt
@@ -97,6 +104,16 @@ model TestResult {
   dinTotal   Int       @default(10)
   promovat   Boolean
   susTinutLa DateTime  @default(now())
+}
+
+model Material {
+  id        String      @id @default(cuid())
+  curs      Curs        @relation(fields: [cursId], references: [id])
+  cursId    String
+  tip       MaterialTip
+  titlu     String
+  url       String      @db.Text
+  createdAt DateTime    @default(now())
 }
 
 model ActivitateLog {

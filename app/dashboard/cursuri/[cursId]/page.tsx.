@@ -1,0 +1,91 @@
+import Link from "next/link";
+import { ShieldCheck, Settings, AlertTriangle, ChevronRight } from "lucide-react";
+import { Sidebar } from "@/components/Sidebar";
+import { ProgressBar } from "@/components/ui";
+import { prisma } from "@/lib/prisma";
+
+const FALLBACK = {
+  angajat: { nume: "Andrei Popescu", functie: "Consilier" },
+  cursuri: [
+    {
+      id: "fallback-1",
+      titlu: "Integritate și prevenirea mitei",
+      descriere: "Principii de integritate, cadrul legal și studii de caz.",
+      icon: "shield",
+      pct: 80,
+      finalizate: 4,
+      total: 5,
+      lectii: [
+        "Ce este mita: definiții și cadru legal",
+        "Principiile integrității",
+        "Conflicte de interese și cadouri",
+        "Studii de caz din administrația publică",
+        "Recapitulare și verificare",
+      ],
+    },
+    {
+      id: "fallback-2",
+      titlu: "Sistemul de management anti-mită",
+      descriere: "Cerințele SMAM conform ISO 37001:2025.",
+      icon: "settings",
+      pct: 55,
+      finalizate: 3,
+      total: 6,
+      lectii: [
+        "Introducere în ISO 37001:2025",
+        "Roluri și responsabilități",
+        "Evaluarea riscurilor de mită",
+        "Controale anti-mită",
+        "Monitorizare și îmbunătățire",
+        "Test intermediar",
+      ],
+    },
+    {
+      id: "fallback-3",
+      titlu: "Raportarea incidentelor",
+      descriere: "Canale de raportare și protecția avertizorilor.",
+      icon: "alert",
+      pct: 0,
+      finalizate: 0,
+      total: 4,
+      lectii: [
+        "Canale interne de raportare",
+        "Protecția avertizorilor de integritate",
+        "Cum se documentează un incident",
+        "Studiu de caz și verificare",
+      ],
+    },
+  ],
+};
+
+async function getData() {
+  try {
+    const angajat = await prisma.angajat.findFirst({
+      where: { role: "ANGAJAT" },
+      include: {
+        enrollments: { include: { curs: { include: { lectii: { orderBy: { ordine: "asc" } } } } } },
+      },
+    });
+    if (!angajat) return FALLBACK;
+
+    const cursuri = angajat.enrollments.map((e) => ({
+      id: e.curs.id,
+      titlu: e.curs.titlu,
+      descriere: e.curs.descriere ?? "",
+      icon: e.curs.icon,
+      pct: e.progresPct,
+      finalizate: e.lectiiFinal,
+      total: e.curs.lectii.length,
+      lectii: e.curs.lectii.map((l) => l.titlu),
+    }));
+
+    return {
+      angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie },
+      cursuri: cursuri.length ? cursuri : FALLBACK.cursuri,
+    };
+  } catch {
+    return FALLBACK;
+  }
+}
+
+const iconFor

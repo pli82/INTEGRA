@@ -1,17 +1,20 @@
-import { ClipboardCheck, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { ClipboardCheck, CheckCircle2, Lock } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { prisma } from "@/lib/prisma";
 
 const FALLBACK = {
   angajat: { nume: "Andrei Popescu", functie: "Consilier" },
   teste: [
-    { titlu: "Test final SMAM", curs: "Sistemul de management anti-mită", durataMin: 15, nrIntrebari: 20, status: "de_dat" as const },
+    { titlu: "Test final SMAM", curs: "Sistemul de management anti-mită", cursId: "fallback-2", durataMin: 15, nrIntrebari: 20, status: "de_dat" as const, deblocat: true },
     {
       titlu: "Evaluare intermediară – Sistemul anti-mită",
       curs: "Sistemul de management anti-mită",
+      cursId: "fallback-2",
       durataMin: 10,
       nrIntrebari: 10,
       status: "promovat" as const,
+      deblocat: true,
       scor: "9/10",
     },
   ],
@@ -23,6 +26,7 @@ async function getData() {
       where: { role: "ANGAJAT" },
       include: {
         testResults: { include: { test: { include: { curs: true } } } },
+        enrollments: true,
       },
     });
     if (!angajat) return FALLBACK;
@@ -30,15 +34,19 @@ async function getData() {
     const teste = await prisma.test.findMany({ include: { curs: true } });
 
     const finalizate = new Map(angajat.testResults.map((r) => [r.testId, r]));
+    const enrollmentByCurs = new Map(angajat.enrollments.map((e) => [e.cursId, e]));
 
     const lista = teste.map((t) => {
       const rezultat = finalizate.get(t.id);
+      const enrollment = enrollmentByCurs.get(t.cursId);
       return {
         titlu: t.titlu,
         curs: t.curs.titlu,
+        cursId: t.cursId,
         durataMin: t.durataMin,
         nrIntrebari: t.nrIntrebari,
         status: rezultat ? ("promovat" as const) : ("de_dat" as const),
+        deblocat: enrollment?.vizualizat ?? false,
         scor: rezultat ? `${rezultat.scor}/${rezultat.dinTotal}` : undefined,
       };
     });
@@ -96,10 +104,18 @@ export default async function TestarePage() {
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                   Promovat {t.scor}
                 </span>
-              ) : (
+              ) : t.deblocat ? (
                 <button className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
                   Începe testul
                 </button>
+              ) : (
+                <Link
+                  href={`/dashboard/cursuri/${t.cursId}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-400"
+                  title="Vizualizează mai întâi cursul"
+                >
+                  <Lock size={13} /> Blocat
+                </Link>
               )}
             </div>
           ))}

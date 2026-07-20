@@ -37,3 +37,54 @@ export async function incarcaFotoProfil(formData: FormData) {
 
   return { success: true };
 }
+
+const MAX_MATERIAL_BYTES = 8 * 1024 * 1024; // 8MB
+
+export async function adaugaMaterial(formData: FormData) {
+  const cursId = formData.get("cursId") as string;
+  const tip = formData.get("tip") as "VIDEO" | "PDF" | "PPTX";
+  const titlu = (formData.get("titlu") as string || "").trim();
+  const videoUrl = (formData.get("videoUrl") as string || "").trim();
+  const file = formData.get("fisier") as File | null;
+
+  if (!cursId || !tip || !titlu) {
+    return { error: "Completează titlul și tipul materialului." };
+  }
+
+  let url: string;
+
+  if (tip === "VIDEO") {
+    if (!videoUrl) return { error: "Introdu un link video." };
+    url = videoUrl;
+  } else {
+    if (!file || file.size === 0) return { error: "Selectează un fișier." };
+    if (file.size > MAX_MATERIAL_BYTES) return { error: "Fișierul e prea mare (maxim 8MB)." };
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString("base64");
+    url = `data:${file.type};base64,${base64}`;
+  }
+
+  await prisma.material.create({ data: { cursId, tip, titlu, url } });
+
+  revalidatePath(`/dashboard/cursuri/${cursId}`);
+  return { success: true };
+}
+
+export async function stergeMaterial(materialId: string, cursId: string) {
+  await prisma.material.delete({ where: { id: materialId } });
+  revalidatePath(`/dashboard/cursuri/${cursId}`);
+}
+
+export async function marcheazaVizualizat(cursId: string) {
+  const angajat = await prisma.angajat.findFirst({ where: { role: "ANGAJAT" } });
+  if (!angajat) return { error: "Nu am găsit angajatul." };
+
+  await prisma.enrollment.updateMany({
+    where: { angajatId: angajat.id, cursId },
+    data: { vizualizat: true },
+  });
+
+  revalidatePath(`/dashboard/cursuri/${cursId}`);
+  revalidatePath("/dashboard/testare");
+  return { success: true };
+}
