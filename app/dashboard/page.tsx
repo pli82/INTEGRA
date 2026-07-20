@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Bell, ShieldCheck, Settings, AlertTriangle, Play, ChevronRight } from "lucide-react";
+import { ShieldCheck, Settings, AlertTriangle, Play, ChevronRight } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { NotificationBell, type Notificare } from "@/components/NotificationBell";
 import { ProgressBar } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
@@ -16,6 +17,11 @@ const FALLBACK = {
     { titlu: "Raportarea incidentelor", icon: "alert", pct: 0, finalizate: 0, total: 4 },
   ],
   urmatoareaTestare: { titlu: "Test final SMAM", data: "24 IUL", durataMin: 15, nrIntrebari: 20 },
+  notificari: [
+    { mesaj: 'Testul „Test final SMAM" are loc pe 24 iulie', detaliu: "15 min · 20 întrebări", tip: "test" as const },
+    { mesaj: 'Mai ai 1 lecție până termini „Integritate și prevenirea mitei"', tip: "curs" as const },
+    { mesaj: 'Nu ai început încă „Raportarea incidentelor"', tip: "atentie" as const },
+  ],
   activitate: [
     { mesaj: 'Ai finalizat lecția „Principiile integrității"', cand: "ieri, 14:32" },
     { mesaj: 'Ai finalizat testul „Evaluare intermediară – Sistemul anti-mită"', cand: "20 iul., 11:08" },
@@ -52,6 +58,26 @@ async function getData() {
         ? Math.round(cursuri.reduce((s, c) => s + c.pct, 0) / cursuri.length)
         : 0;
 
+    const notificari: Notificare[] = [];
+
+    notificari.push({
+      mesaj: `Testul „${FALLBACK.urmatoareaTestare.titlu}" are loc pe ${FALLBACK.urmatoareaTestare.data}`,
+      detaliu: `${FALLBACK.urmatoareaTestare.durataMin} min · ${FALLBACK.urmatoareaTestare.nrIntrebari} întrebări`,
+      tip: "test",
+    });
+
+    for (const c of cursuri) {
+      const ramase = c.total - c.finalizate;
+      if (c.pct === 0) {
+        notificari.push({ mesaj: `Nu ai început încă „${c.titlu}"`, tip: "atentie" });
+      } else if (c.pct < 100 && ramase > 0) {
+        notificari.push({
+          mesaj: `Mai ai ${ramase} ${ramase === 1 ? "lecție" : "lecții"} până termini „${c.titlu}"`,
+          tip: "curs",
+        });
+      }
+    }
+
     return {
       angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, structura: angajat.structura.nume, fotoUrl: angajat.fotoUrl },
       progresGeneral,
@@ -59,6 +85,7 @@ async function getData() {
       termenUrmator: FALLBACK.termenUrmator,
       cursuri: cursuri.length ? cursuri : FALLBACK.cursuri,
       urmatoareaTestare: FALLBACK.urmatoareaTestare,
+      notificari: notificari.length ? notificari : FALLBACK.notificari,
       activitate: activitate.length
         ? activitate.map((a) => ({ mesaj: a.mesaj, cand: new Date(a.createdAt).toLocaleDateString("ro-RO") }))
         : FALLBACK.activitate,
@@ -113,12 +140,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Bell size={20} className="text-slate-500" />
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                3
-              </span>
-            </div>
+            <NotificationBell notificari={data.notificari} />
             <AvatarUpload nume={data.angajat.nume} fotoUrl={data.angajat.fotoUrl} />
             <Link
               href="/dashboard/cursuri"
