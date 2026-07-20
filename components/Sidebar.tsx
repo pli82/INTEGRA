@@ -10,6 +10,7 @@ import {
   Vote,
 } from "lucide-react";
 import clsx from "clsx";
+import { AvatarUpload } from "./AvatarUpload";
 
 type NavItem = {
   href: string;
@@ -22,11 +23,13 @@ export function Sidebar({
   activeHref,
   userName,
   userRole,
+  fotoUrl,
 }: {
   variant: "angajat" | "admin";
   activeHref: string;
   userName?: string;
   userRole?: string;
+  fotoUrl?: string | null;
 }) {
   const angajatNav: NavItem[] = [
     { href: "/dashboard", label: "Acasă", icon: <Home size={18} /> },
@@ -89,13 +92,17 @@ export function Sidebar({
 
       {userName && (
         <div className="flex items-center gap-2 border-t border-white/10 px-2 pt-4 text-sm">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
-            {userName
-              .split(" ")
-              .map((p) => p[0])
-              .slice(0, 2)
-              .join("")}
-          </div>
+          {variant === "angajat" ? (
+            <AvatarUpload nume={userName} fotoUrl={fotoUrl} />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+              {userName
+                .split(" ")
+                .map((p) => p[0])
+                .slice(0, 2)
+                .join("")}
+            </div>
+          )}
           <div className="leading-tight">
             <div className="font-medium text-white">{userName}</div>
             <div className="text-xs text-white/60">{userRole}</div>

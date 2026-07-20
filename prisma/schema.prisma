@@ -35,6 +35,7 @@ model Angajat {
   structuraId        String
   consimtamantGDPR   Boolean       @default(false)
   consimtamantData   DateTime?
+  fotoUrl            String?       @db.Text
   enrollments        Enrollment[]
   testResults        TestResult[]
   createdAt          DateTime      @default(now())

@@ -1,10 +1,12 @@
+import Link from "next/link";
 import { Bell, ShieldCheck, Settings, AlertTriangle, Play, ChevronRight } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { ProgressBar } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
 const FALLBACK = {
-  angajat: { nume: "Andrei Popescu", functie: "Consilier", structura: "Direcția de management al calității" },
+  angajat: { nume: "Andrei Popescu", functie: "Consilier", structura: "Direcția de management al calității", fotoUrl: null as string | null },
   progresGeneral: 68,
   moduleActive: 3,
   termenUrmator: "31 iulie",
@@ -51,7 +53,7 @@ async function getData() {
         : 0;
 
     return {
-      angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, structura: angajat.structura.nume },
+      angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, structura: angajat.structura.nume, fotoUrl: angajat.fotoUrl },
       progresGeneral,
       moduleActive: cursuri.filter((c) => c.pct > 0 && c.pct < 100).length || FALLBACK.moduleActive,
       termenUrmator: FALLBACK.termenUrmator,
@@ -94,6 +96,7 @@ export default async function DashboardPage() {
         activeHref="/dashboard"
         userName={data.angajat.nume}
         userRole={data.angajat.functie}
+        fotoUrl={data.angajat.fotoUrl}
       />
 
       <main className="flex-1 p-8">
@@ -116,12 +119,13 @@ export default async function DashboardPage() {
                 3
               </span>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-white">
-              AP
-            </div>
-            <button className="flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+            <AvatarUpload nume={data.angajat.nume} fotoUrl={data.angajat.fotoUrl} />
+            <Link
+              href="/dashboard/cursuri"
+              className="flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
+            >
               <Play size={15} /> Continuă cursul
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -131,9 +135,12 @@ export default async function DashboardPage() {
             <p className="mt-1 text-sm text-white/70">
               {data.moduleActive} module active · termen următor: {data.termenUrmator}
             </p>
-            <button className="mt-5 flex items-center gap-1 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900">
+            <Link
+              href="/dashboard/progres"
+              className="mt-5 flex items-center gap-1 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900"
+            >
               Vezi progresul <ChevronRight size={15} />
-            </button>
+            </Link>
           </div>
           <div className="relative flex h-32 w-32 items-center justify-center rounded-full border-8 border-white/20">
             <div
@@ -172,13 +179,19 @@ export default async function DashboardPage() {
                     <span>{c.finalizate} / {c.total} lecții</span>
                   </div>
                   {c.pct > 0 ? (
-                    <button className="mt-auto flex items-center justify-center gap-1 rounded-lg bg-blue-700 py-2 text-sm font-medium text-white">
+                    <Link
+                      href="/dashboard/cursuri"
+                      className="mt-auto flex items-center justify-center gap-1 rounded-lg bg-blue-700 py-2 text-sm font-medium text-white"
+                    >
                       Continuă <ChevronRight size={14} />
-                    </button>
+                    </Link>
                   ) : (
-                    <button className="mt-auto rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-700">
+                    <Link
+                      href="/dashboard/cursuri"
+                      className="mt-auto rounded-lg border border-slate-200 py-2 text-center text-sm font-medium text-slate-700"
+                    >
                       Începe acum
-                    </button>
+                    </Link>
                   )}
                 </div>
               ))}
@@ -200,9 +213,12 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <button className="mt-3 w-full rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-700">
+              <Link
+                href="/dashboard/testare"
+                className="mt-3 block w-full rounded-lg border border-slate-200 py-2 text-center text-sm font-medium text-slate-700"
+              >
                 Începe testul ›
-              </button>
+              </Link>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-5">
