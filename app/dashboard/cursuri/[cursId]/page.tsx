@@ -19,15 +19,12 @@ async function getData(cursId: string) {
         },
       }),
     ]);
-
     if (!curs) return null;
-
     const enrollment = angajat
       ? await prisma.enrollment.findUnique({
           where: { angajatId_cursId: { angajatId: angajat.id, cursId: curs.id } },
         })
       : null;
-
     return {
       angajat: angajat
         ? { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, fotoUrl: angajat.fotoUrl }
@@ -56,26 +53,21 @@ const labelForTip = (tip: string) => {
 export default async function CursDetaliuPage({ params }: { params: Promise<{ cursId: string }> }) {
   const { cursId } = await params;
   const data = await getData(cursId);
-
   if (!data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <p className="text-slate-500">Cursul nu a putut fi încărcat.</p>
-          <Link href="/dashboard/cursuri" className="mt-4 inline-block text-sm text-blue-700">
-            ← Înapoi la cursuri
-          </Link>
+          <p className="text-slate-500">Cursul nu a putut fi incarcat.</p>
+          <Link href="/dashboard/cursuri" className="mt-4 inline-block text-sm text-blue-700">Inapoi la cursuri</Link>
         </div>
       </div>
     );
   }
-
   const { angajat, curs, enrollment } = data;
   const vizualizat = enrollment?.vizualizat ?? false;
   const pct = enrollment?.progresPct ?? 0;
   const finalizate = enrollment?.lectiiFinal ?? 0;
   const marcheazaAction = marcheazaVizualizat.bind(null, curs.id);
-
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar variant="angajat" activeHref="/dashboard/cursuri" userName={angajat.nume} userRole={angajat.functie} fotoUrl={angajat.fotoUrl} />
@@ -84,12 +76,12 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
         <p className="mb-4 text-sm text-slate-500">{curs.descriere}</p>
         <div className="mb-6 flex items-center gap-3">
           <div className="flex-1"><ProgressBar pct={pct} /></div>
-          <span className="text-xs text-slate-500">{pct}% · {finalizate}/{curs.lectii.length} lecții</span>
+          <span className="text-xs text-slate-500">{pct}% · {finalizate}/{curs.lectii.length} lectii</span>
         </div>
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 flex flex-col gap-6">
             <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-4 text-base font-medium text-slate-900">Lecții</h2>
+              <h2 className="mb-4 text-base font-medium text-slate-900">Lectii</h2>
               <ul className="flex flex-col gap-2">
                 {curs.lectii.map((l, i) => (
                   <li key={l.id} className="flex items-center gap-2 text-sm text-slate-600">
@@ -106,7 +98,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-4 text-base font-medium text-slate-900">Materiale de curs</h2>
               {curs.materiale.length === 0 ? (
-                <p className="text-sm text-slate-400">Niciun material adăugat încă.</p>
+                <p className="text-sm text-slate-400">Niciun material adaugat inca.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {curs.materiale.map((m) => (
@@ -117,9 +109,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
                         <span className="text-xs text-slate-400">({labelForTip(m.tip)})</span>
                       </a>
                       <form action={stergeMaterial.bind(null, m.id, curs.id)}>
-                        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600">
-                          <Trash2 size={14} />
-                        </button>
+                        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
                       </form>
                     </li>
                   ))}
@@ -127,7 +117,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
               )}
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-4 text-base font-medium text-slate-900">Adaugă material nou</h2>
+              <h2 className="mb-4 text-base font-medium text-slate-900">Adauga material nou</h2>
               <form action={adaugaMaterial} className="flex flex-col gap-4">
                 <input type="hidden" name="cursId" value={curs.id} />
                 <div>
@@ -140,17 +130,17 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
                 </div>
                 <div>
                   <label className="mb-1 block text-sm text-slate-600">Titlu</label>
-                  <input name="titlu" placeholder="ex. Prezentare introductivă SMAM" required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400" />
+                  <input name="titlu" placeholder="Titlu material" required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-slate-600">Link video <span className="text-slate-400">(doar pentru Video)</span></label>
-                  <input name="videoUrl" type="url" placeholder="https://..." className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400" />
+                  <label className="mb-1 block text-sm text-slate-600">Link video</label>
+                  <input name="videoUrl" type="url" placeholder="https://..." className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-slate-600">Fișier <span className="text-slate-400">(PDF/Prezentare, max 8MB)</span></label>
+                  <label className="mb-1 block text-sm text-slate-600">Fisier (PDF/PPTX, max 8MB)</label>
                   <input name="fisier" type="file" accept=".pdf,.ppt,.pptx" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
                 </div>
-                <button type="submit" className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">Adaugă materialul</button>
+                <button type="submit" className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white">Adauga materialul</button>
               </form>
             </div>
           </div>
@@ -158,14 +148,12 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-3 text-base font-medium text-slate-900">Testare</h2>
               {vizualizat ? (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Ai vizualizat cursul — testul este disponibil în secțiunea Testare.
-                </div>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Ai vizualizat cursul.</div>
               ) : (
                 <>
-                  <p className="mb-4 text-sm text-slate-500">Testul se deblochează după ce marchezi cursul ca vizualizat.</p>
+                  <p className="mb-4 text-sm text-slate-500">Testul se deblocheaza dupa ce marchezi cursul ca vizualizat.</p>
                   <form action={marcheazaAction}>
-                    <button type="submit" className="w-full rounded-lg bg-blue-700 py-2 text-sm font-medium text-white hover:bg-blue-800">Am vizualizat cursul</button>
+                    <button type="submit" className="w-full rounded-lg bg-blue-700 py-2 text-sm font-medium text-white">Am vizualizat cursul</button>
                   </form>
                 </>
               )}

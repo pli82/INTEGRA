@@ -10,22 +10,16 @@ async function getData(cursId: string) {
       where: { id: cursId },
       include: { intrebari: { orderBy: { ordine: "asc" }, include: { optiuni: true } } },
     });
-    if (!curs) return null;
     return {
-      angajat: angajat
-        ? { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie, fotoUrl: angajat.fotoUrl }
-        : { nume: "Andrei Popescu", functie: "Consilier", fotoUrl: null },
+      angajat: angajat ? { nume: angajat.prenume + " " + angajat.nume, functie: angajat.functie, fotoUrl: angajat.fotoUrl } : { nume: "Andrei Popescu", functie: "Consilier", fotoUrl: null },
       curs,
     };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 export default async function TestIntermediarPage({ params }: { params: Promise<{ cursId: string }> }) {
   const { cursId } = await params;
   const data = await getData(cursId);
-  if (!data) return notFound();
   const { angajat, curs } = data;
   return (
     <div className="flex min-h-screen bg-slate-50">
