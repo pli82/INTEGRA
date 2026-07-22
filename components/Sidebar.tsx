@@ -8,9 +8,11 @@ import {
   Folder,
   Settings,
   Vote,
+  LogOut,
 } from "lucide-react";
 import clsx from "clsx";
 import { AvatarUpload } from "./AvatarUpload";
+import { logout } from "@/app/auth/actions";
 
 type NavItem = {
   href: string;
@@ -91,22 +93,32 @@ export function Sidebar({
       </div>
 
       {userName && (
-        <div className="flex items-center gap-2 border-t border-white/10 px-2 pt-4 text-sm">
-          {variant === "angajat" ? (
-            <AvatarUpload nume={userName} fotoUrl={fotoUrl} />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
-              {userName
-                .split(" ")
-                .map((p) => p[0])
-                .slice(0, 2)
-                .join("")}
+        <div className="flex flex-col gap-2 border-t border-white/10 px-2 pt-4 text-sm">
+          <div className="flex items-center gap-2">
+            {variant === "angajat" ? (
+              <AvatarUpload nume={userName} fotoUrl={fotoUrl} />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                {userName
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")}
+              </div>
+            )}
+            <div className="leading-tight">
+              <div className="font-medium text-white">{userName}</div>
+              <div className="text-xs text-white/60">{userRole}</div>
             </div>
-          )}
-          <div className="leading-tight">
-            <div className="font-medium text-white">{userName}</div>
-            <div className="text-xs text-white/60">{userRole}</div>
           </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-white/60 hover:bg-white/5 hover:text-white"
+            >
+              <LogOut size={14} /> Deconectare
+            </button>
+          </form>
         </div>
       )}
     </aside>

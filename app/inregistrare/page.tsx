@@ -1,4 +1,5 @@
 import { Vote } from "lucide-react";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { RegistrationForm } from "@/components/RegistrationForm";
 
@@ -36,10 +37,17 @@ export default async function InregistrarePage() {
 
         <h1 className="mb-1 text-xl font-medium text-slate-900">Înregistrare angajat</h1>
         <p className="mb-6 text-sm text-slate-500">
-          Completează datele de mai jos pentru a avea acces la platforma de instruire anti-mită.
+          Creează-ți contul pentru a accesa platforma de instruire anti-mită.
         </p>
 
         <RegistrationForm compartimente={compartimente} />
+
+        <p className="mt-4 text-center text-sm text-slate-500">
+          Ai deja cont?{" "}
+          <Link href="/login" className="text-blue-700 hover:underline">
+            Intră în cont
+          </Link>
+        </p>
       </div>
     </div>
   );

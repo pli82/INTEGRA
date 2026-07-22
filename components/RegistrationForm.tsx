@@ -1,19 +1,23 @@
 "use client";
 
 import { useActionState } from "react";
-import { inregistreazaAngajat, type RegistrationState } from "@/app/inregistrare/actions";
+import { inregistreaza, type AuthState } from "@/app/auth/actions";
 
-const initialState: RegistrationState = {};
+const initialState: AuthState = {};
 
 export function RegistrationForm({ compartimente }: { compartimente: string[] }) {
-  const [state, formAction, pending] = useActionState(inregistreazaAngajat, initialState);
+  const [state, formAction, pending] = useActionState(inregistreaza, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Nume" name="nume" placeholder="ex. Popescu" />
         <Field label="Prenume" name="prenume" placeholder="ex. Andrei" />
+        <Field label="Nume" name="nume" placeholder="ex. Popescu" />
       </div>
+
+      <Field label="Email" name="email" type="email" placeholder="prenume.nume@aep.ro" />
+
+      <Field label="Parolă" name="parola" type="password" placeholder="Minim 6 caractere" />
 
       <Field label="Funcție" name="functie" placeholder="ex. Consilier" />
 
@@ -40,7 +44,7 @@ export function RegistrationForm({ compartimente }: { compartimente: string[] })
         <input type="checkbox" name="consimtamant" required className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           Sunt de acord cu prelucrarea datelor mele cu caracter personal (nume, prenume, funcție,
-          compartiment) de către AEP, în scopul înregistrării și administrării activității de
+          compartiment, email) de către AEP, în scopul înregistrării și administrării activității de
           instruire anti-mită, conform Regulamentului (UE) 2016/679 (GDPR).
         </span>
       </label>
@@ -56,13 +60,23 @@ export function RegistrationForm({ compartimente }: { compartimente: string[] })
         disabled={pending}
         className="rounded-lg bg-blue-700 py-2.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-60"
       >
-        {pending ? "Se înregistrează…" : "Înregistrează-te"}
+        {pending ? "Se înregistrează…" : "Creează cont"}
       </button>
     </form>
   );
 }
 
-function Field({ label, name, placeholder }: { label: string; name: string; placeholder: string }) {
+function Field({
+  label,
+  name,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  placeholder: string;
+  type?: string;
+}) {
   return (
     <div>
       <label htmlFor={name} className="mb-1 block text-sm text-slate-600">
@@ -71,6 +85,7 @@ function Field({ label, name, placeholder }: { label: string; name: string; plac
       <input
         id={name}
         name={name}
+        type={type}
         placeholder={placeholder}
         required
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"

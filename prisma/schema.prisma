@@ -23,6 +23,7 @@ enum MaterialTip {
   PDF
   PPTX
 }
+
 model Structura {
   id        String     @id @default(cuid())
   nume      String     @unique
@@ -33,7 +34,8 @@ model Angajat {
   id                 String        @id @default(cuid())
   nume               String
   prenume            String
-  email              String?       @unique
+  email              String        @unique
+  parola             String?
   functie            String
   role               Role          @default(ANGAJAT)
   structura          Structura     @relation(fields: [structuraId], references: [id])
@@ -133,6 +135,7 @@ model Optiune {
   text        String
   corecta     Boolean   @default(false)
 }
+
 model ActivitateLog {
   id        String   @id @default(cuid())
   angajatId String
