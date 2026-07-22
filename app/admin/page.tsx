@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Users, PieChart, Award, ClipboardList, Download, FileText, BookOpen, HelpCircle } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard, StatusBadge, ProgressBar } from "@/components/ui";
@@ -13,9 +14,9 @@ const FALLBACK_ROWS = [
 
 async function getData() {
   try {
-    const [totalAngajati, cursuri, teste, enrollments] = await Promise.all([
+    const [totalAngajati, cursuriList, teste, enrollments] = await Promise.all([
       prisma.angajat.count({ where: { role: "ANGAJAT" } }),
-      prisma.curs.count(),
+      prisma.curs.findMany({ orderBy: { ordine: "asc" } }),
       prisma.test.count(),
       prisma.enrollment.findMany({
         include: { angajat: { include: { structura: true } }, curs: true },
@@ -34,7 +35,7 @@ async function getData() {
         ? (results.reduce((s, r) => s + (r.scor / r.dinTotal) * 10, 0) / results.length).toFixed(1)
         : "8,6";
 
-    const testeInAsteptare = enrollments.filter((e) => e.status === "IN_CURS").length;
+    const testeInAsteptare = enrollments.filter((e) => e.status === "IN_CURS\").length;
 
     const rows = enrollments
       .filter((e) => e.curs.titlu.includes("anti-mită") || e.curs.titlu.includes("Sistemul"))
@@ -52,8 +53,9 @@ async function getData() {
       rate: rate || 78,
       scorMediu: scorMediu.toString().replace(".", ","),
       testeInAsteptare: testeInAsteptare || 34,
-      cursuriCount: cursuri || 24,
+      cursuriCount: cursuriList.length || 24,
       testeCount: teste || 152,
+      cursuriList,
       rows: rows.length ? rows : FALLBACK_ROWS,
     };
   } catch {
@@ -64,6 +66,7 @@ async function getData() {
       testeInAsteptare: 34,
       cursuriCount: 24,
       testeCount: 152,
+      cursuriList: [] as { id: string; titlu: string }[],
       rows: FALLBACK_ROWS,
     };
   }
@@ -110,13 +113,8 @@ export default async function AdminPage() {
                 <Select label="Perioadă" placeholder="Ultimele 3 luni" />
               </div>
               <div className="mt-4 flex gap-3">
-                <input
-                  placeholder="Caută angajat"
-                  className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
-                />
-                <button className="rounded-lg bg-blue-900 px-5 py-2 text-sm font-medium text-white">
-                  Aplică filtre
-                </button>
+                <input placeholder="Caută angajat" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400" />
+                <button className="rounded-lg bg-blue-900 px-5 py-2 text-sm font-medium text-white">Aplică filtre</button>
               </div>
             </div>
 
@@ -166,16 +164,10 @@ export default async function AdminPage() {
               <h3 className="mb-3 text-base font-medium text-slate-900">Raportare și export</h3>
               <div className="mb-3 flex h-24 items-end gap-2">
                 {[60, 80, 45, 65, 40, 55, 90].map((h, i) => (
-                  <div
-                    key={i}
-                    className={`flex-1 rounded-t ${i % 2 === 0 ? "bg-teal-500" : "bg-blue-600"}`}
-                    style={{ height: `${h}%` }}
-                  />
+                  <div key={i} className={`flex-1 rounded-t ${i % 2 === 0 ? "bg-teal-500" : "bg-blue-600"}`} style={{ height: `${h}%` }} />
                 ))}
               </div>
-              <p className="mb-3 text-sm text-slate-500">
-                Exportă datele pentru analiza participării și a rezultatelor
-              </p>
+              <p className="mb-3 text-sm text-slate-500">Exportă datele pentru analiza participării și a rezultatelor</p>
               <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white">
                 <Download size={15} /> Descarcă Excel
               </button>
@@ -183,23 +175,24 @@ export default async function AdminPage() {
 
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <h3 className="mb-3 text-base font-medium text-slate-900">Management conținut</h3>
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-slate-700">
-                  <BookOpen size={16} /> Cursuri de instruire
-                  <span className="font-medium text-slate-900">{data.cursuriCount}</span>
-                </div>
-                <button className="rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
-                  Gestionează
-                </button>
+              <div className="mb-2 flex items-center gap-2 text-sm text-slate-700">
+                <BookOpen size={16} /> Cursuri de instruire
+                <span className="font-medium text-slate-900">{data.cursuriCount}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-slate-700">
-                  <HelpCircle size={16} /> Teste și întrebări
-                  <span className="font-medium text-slate-900">{data.testeCount}</span>
-                </div>
-                <button className="rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
-                  Gestionează
-                </button>
+              <div className="flex flex-col gap-1 mb-4">
+                {data.cursuriList.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/admin/cursuri/${c.id}`}
+                    className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-700"
+                  >
+                    {c.titlu}
+                  </Link>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <HelpCircle size={16} /> Teste și întrebări
+                <span className="font-medium text-slate-900">{data.testeCount}</span>
               </div>
             </div>
           </div>
