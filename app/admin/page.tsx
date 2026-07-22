@@ -35,7 +35,7 @@ async function getData() {
         ? (results.reduce((s, r) => s + (r.scor / r.dinTotal) * 10, 0) / results.length).toFixed(1)
         : "8,6";
 
-    const testeInAsteptare = enrollments.filter((e) => e.status === "IN_CURS\").length;
+    const testeInAsteptare = enrollments.filter((e) => e.status === "IN_CURS").length;
 
     const rows = enrollments
       .filter((e) => e.curs.titlu.includes("anti-mită") || e.curs.titlu.includes("Sistemul"))
