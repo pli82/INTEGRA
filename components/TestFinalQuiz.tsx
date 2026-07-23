@@ -160,7 +160,7 @@ export function TestFinalQuiz({
       y += liniiEnunt.length * 5 + 2;
 
       doc.setFont("NotoSans", "normal");
-      const raspunsText = `Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"}`;
+      const raspunsText = `Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"} - ${corect ? "CORECT" : "GRESIT"}`;
       const liniiRaspuns = doc.splitTextToSize(raspunsText, maxWidth);
       verificaSpatiu(liniiRaspuns.length * 5 + 10);
       if (corect) {
