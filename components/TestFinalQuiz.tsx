@@ -30,6 +30,7 @@ export function TestFinalQuiz({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const deseneazaRef = useRef(false);
   const rezultatFinalRef = useRef<{ scor: number; dinTotal: number } | null>(null);
+  const raspunsuriRef = useRef<Record<string, string>>({});
 
   const intrebare = intrebari[index];
   const ultima = index === intrebari.length - 1;
@@ -37,6 +38,7 @@ export function TestFinalQuiz({
   const alegeOptiune = (optiune: Optiune) => {
     if (selectat) return;
     setSelectat(optiune.id);
+    raspunsuriRef.current[intrebare.id] = optiune.id;
     if (optiune.corecta) setScor((s) => s + 1);
   };
 
@@ -99,12 +101,24 @@ export function TestFinalQuiz({
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     const promovat = scor / intrebari.length >= 0.7;
+    const marginX = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - marginX * 2;
+    let y = 20;
+
+    const verificaSpatiu = (necesar: number) => {
+      if (y + necesar > pageHeight - 15) {
+        doc.addPage();
+        y = 20;
+      }
+    };
 
     doc.setFontSize(16);
-    doc.text("Certificat de finalizare - Test general de evaluare", 15, 20);
+    doc.text("Certificat de finalizare - Test general de evaluare", marginX, y);
+    y += 12;
 
     doc.setFontSize(11);
-    let y = 35;
     const randuri: [string, string][] = [
       ["Nume", angajat.nume],
       ["Prenume", angajat.prenume],
@@ -115,14 +129,51 @@ export function TestFinalQuiz({
       ["Rezultat", promovat ? "Promovat" : "Respins"],
     ];
     for (const [label, valoare] of randuri) {
-      doc.text(`${label}:`, 15, y);
+      doc.text(`${label}:`, marginX, y);
       doc.text(valoare, 70, y);
       y += 8;
     }
 
-    y += 6;
-    doc.text("Semnatura:", 15, y);
-    doc.addImage(semnatura, "PNG", 15, y + 4, 60, 25);
+    y += 4;
+    doc.text("Semnatura:", marginX, y);
+    doc.addImage(semnatura, "PNG", marginX, y + 4, 55, 22);
+    y += 34;
+
+    verificaSpatiu(10);
+    doc.setFontSize(13);
+    doc.text("Detaliu intrebari si raspunsuri", marginX, y);
+    y += 10;
+
+    doc.setFontSize(10);
+    intrebari.forEach((intr, i) => {
+      const raspunsAlesId = raspunsuriRef.current[intr.id];
+      const optiuneAleasa = intr.optiuni.find((o) => o.id === raspunsAlesId);
+      const optiuneCorecta = intr.optiuni.find((o) => o.corecta);
+      const corect = !!optiuneAleasa?.corecta;
+
+      const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
+      verificaSpatiu(liniiEnunt.length * 5 + 16);
+      doc.setFont("helvetica", "bold");
+      doc.text(liniiEnunt, marginX, y);
+      y += liniiEnunt.length * 5 + 2;
+
+      doc.setFont("helvetica", "normal");
+      const liniiRaspuns = doc.splitTextToSize(
+        `Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"} - ${corect ? "Corect" : "Gresit"}`,
+        maxWidth
+      );
+      verificaSpatiu(liniiRaspuns.length * 5 + 10);
+      doc.text(liniiRaspuns, marginX, y);
+      y += liniiRaspuns.length * 5;
+
+      if (!corect && optiuneCorecta) {
+        const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${optiuneCorecta.text}`, maxWidth);
+        verificaSpatiu(liniiCorect.length * 5 + 8);
+        doc.text(liniiCorect, marginX, y);
+        y += liniiCorect.length * 5;
+      }
+      y += 6;
+    });
 
     doc.save(`certificat-test-general-${angajat.nume}-${angajat.prenume}.pdf`);
   };
@@ -177,7 +228,7 @@ export function TestFinalQuiz({
           {promovat ? "Promovat" : "Respins"}
         </p>
         <p className="mb-6 text-xs text-slate-400">
-          Certificatul PDF a fost descarcat automat. Daca nu s-a descarcat, verifica setarile browserului pentru descarcari.
+          Certificatul PDF (cu toate intrebarile si raspunsurile) a fost descarcat automat. Daca nu s-a descarcat, verifica setarile browserului pentru descarcari.
         </p>
         <Link href="/dashboard/testare" className="inline-block rounded-lg bg-blue-700 px-5 py-2 text-sm font-medium text-white hover:bg-blue-800">
           Inapoi la testare
@@ -211,7 +262,7 @@ export function TestFinalQuiz({
             Sterge semnatura
           </button>
           <span className="text-xs text-slate-400">
-            {angajat.prenume} {angajat.nume} · {angajat.functie} · {angajat.structura}
+            {angajat.prenume} {angajat.nume} - {angajat.functie} - {angajat.structura}
           </span>
         </div>
         {eroare && (
