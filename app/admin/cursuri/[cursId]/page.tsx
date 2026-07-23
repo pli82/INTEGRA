@@ -4,6 +4,8 @@ import { Video, FileText, Presentation, Trash2, ArrowLeft } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { prisma } from "@/lib/prisma";
 import { adaugaMaterial, stergeMaterial } from "@/app/dashboard/actions";
+import { stergeIntrebare } from "./actions";
+import { IntrebareForm } from "./IntrebareForm";
 
 async function getData(cursId: string) {
   try {
@@ -63,9 +65,10 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="mb-4 text-base font-medium text-slate-900">Intrebari test intermediar <span className="text-sm font-normal text-slate-400">({curs.intrebari.length})</span></h2>
-            {curs.intrebari.length === 0 ? <p className="text-sm text-slate-400">Nu exista intrebari.</p> : (
-              <ul className="flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "600px" }}>{curs.intrebari.map((q, i) => (<li key={q.id} className="rounded-lg border border-slate-100 p-4"><p className="mb-2 text-sm font-medium text-slate-800">{i + 1}. {q.enunt}</p><ul className="flex flex-col gap-1">{q.optiuni.map((o) => (<li key={o.id} className={o.corecta ? "flex items-center gap-2 rounded px-2 py-1 text-xs bg-emerald-50 text-emerald-700" : "flex items-center gap-2 rounded px-2 py-1 text-xs text-slate-500"}>{o.corecta ? "✓" : "·"} {o.text}</li>))}</ul></li>))}</ul>
+            {curs.intrebari.length === 0 ? <p className="mb-4 text-sm text-slate-400">Nu exista intrebari.</p> : (
+              <ul className="mb-4 flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "600px" }}>{curs.intrebari.map((q, i) => (<li key={q.id} className="rounded-lg border border-slate-100 p-4"><div className="mb-2 flex items-start justify-between gap-2"><p className="text-sm font-medium text-slate-800">{i + 1}. {q.enunt}</p><form action={stergeIntrebare.bind(null, q.id, curs.id)}><button type="submit" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button></form></div><ul className="flex flex-col gap-1">{q.optiuni.map((o) => (<li key={o.id} className={o.corecta ? "flex items-center gap-2 rounded px-2 py-1 text-xs bg-emerald-50 text-emerald-700" : "flex items-center gap-2 rounded px-2 py-1 text-xs text-slate-500"}>{o.corecta ? "✓" : "·"} {o.text}</li>))}</ul></li>))}</ul>
             )}
+            <IntrebareForm cursId={curs.id} />
           </div>
         </div>
       </main>
