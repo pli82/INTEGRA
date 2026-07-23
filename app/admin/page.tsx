@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 type CursRand = { titlu: string; progres: number; status: string };
 type IntrebareDetaliuRand = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliuRand[] } | null;
+type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliuRand[]; semnatura: string | null } | null;
 
 const FALLBACK_ROWS = [
   { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
@@ -78,6 +78,7 @@ async function getData() {
                 scor: tf.scor,
                 dinTotal: tf.dinTotal,
                 promovat: tf.promovat,
+                semnatura: tf.semnatura,
                 intrebari: tf.raspunsuriDetaliu
                   ? (() => {
                       try {
