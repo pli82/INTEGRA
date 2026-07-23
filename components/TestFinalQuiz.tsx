@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, X, Download } from "lucide-react";
 import clsx from "clsx";
 import { finalizeazaTestFinal } from "@/app/dashboard/testare/general/actions";
+import { inregistreazaFontRomanesc } from "@/lib/pdfFont";
 
 type Optiune = { id: string; text: string; corecta: boolean };
 type Intrebare = { id: string; enunt: string; optiuni: Optiune[] };
@@ -100,6 +101,7 @@ export function TestFinalQuiz({
   const genereazaPdf = async (semnatura: string) => {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
+    inregistreazaFontRomanesc(doc);
     const promovat = scor / intrebari.length >= 0.7;
     const marginX = 15;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -153,11 +155,11 @@ export function TestFinalQuiz({
 
       const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
       verificaSpatiu(liniiEnunt.length * 5 + 16);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("NotoSans", "bold");
       doc.text(liniiEnunt, marginX, y);
       y += liniiEnunt.length * 5 + 2;
 
-      doc.setFont("helvetica", "normal");
+      doc.setFont("NotoSans", "normal");
       const liniiRaspuns = doc.splitTextToSize(
         `Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"} - ${corect ? "Corect" : "Gresit"}`,
         maxWidth

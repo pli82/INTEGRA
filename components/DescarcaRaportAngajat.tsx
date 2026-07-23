@@ -1,10 +1,11 @@
 "use client";
 
 import { FileText } from "lucide-react";
+import { inregistreazaFontRomanesc } from "@/lib/pdfFont";
 
 type CursRand = { titlu: string; progres: number; status: string };
 type IntrebareDetaliu = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliu[] } | null;
+type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliu[]; semnatura: string | null } | null;
 
 const statusLabel: Record<string, string> = {
   PROMOVAT: "Promovat",
@@ -25,6 +26,7 @@ export function DescarcaRaportAngajat({
   const genereaza = async () => {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
+    inregistreazaFontRomanesc(doc);
     const marginX = 15;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -83,7 +85,16 @@ export function DescarcaRaportAngajat({
       doc.text(`Scor: ${testFinal.scor} / ${testFinal.dinTotal}`, marginX, y);
       y += 7;
       doc.text(`Rezultat: ${testFinal.promovat ? "Promovat" : "Respins"}`, marginX, y);
-      y += 10;
+      y += 8;
+
+      if (testFinal.semnatura) {
+        verificaSpatiu(30);
+        doc.text("Semnatura:", marginX, y);
+        doc.addImage(testFinal.semnatura, "PNG", marginX, y + 4, 55, 22);
+        y += 30;
+      } else {
+        y += 2;
+      }
 
       if (testFinal.intrebari.length > 0) {
         verificaSpatiu(10);
@@ -95,11 +106,11 @@ export function DescarcaRaportAngajat({
         testFinal.intrebari.forEach((intr, i) => {
           const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
           verificaSpatiu(liniiEnunt.length * 5 + 14);
-          doc.setFont("helvetica", "bold");
+          doc.setFont("NotoSans", "bold");
           doc.text(liniiEnunt, marginX, y);
           y += liniiEnunt.length * 5 + 2;
 
-          doc.setFont("helvetica", "normal");
+          doc.setFont("NotoSans", "normal");
           const liniiRaspuns = doc.splitTextToSize(
             `Raspuns dat: ${intr.raspunsAles} - ${intr.corect ? "Corect" : "Gresit"}`,
             maxWidth
