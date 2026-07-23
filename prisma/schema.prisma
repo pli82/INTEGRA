@@ -60,6 +60,7 @@ model Curs {
   intrebari    Intrebare[]
   enrollments  Enrollment[]
   teste        Test[]
+  testFinal    TestFinal?
   createdAt    DateTime      @default(now())
 }
 
@@ -139,7 +140,9 @@ model Optiune {
 
 model TestFinal {
   id          String            @id @default(cuid())
-  titlu       String            @default("Test general de evaluare")
+  curs        Curs              @relation(fields: [cursId], references: [id])
+  cursId      String            @unique
+  titlu       String            @default("Test final")
   activ       Boolean           @default(false)
   nrIntrebari Int               @default(20)
   dataLimita  DateTime?
