@@ -111,37 +111,12 @@ export function DescarcaRaportAngajat({
           y += liniiEnunt.length * 5 + 2;
 
           doc.setFont("NotoSans", "normal");
-          const liniiRaspuns = doc.splitTextToSize(
-            `Raspuns dat: ${intr.raspunsAles} - ${intr.corect ? "Corect" : "Gresit"}`,
-            maxWidth
-          );
+          const raspunsText = `Raspuns dat: ${intr.raspunsAles}`;
+          const liniiRaspuns = doc.splitTextToSize(raspunsText, maxWidth);
           verificaSpatiu(liniiRaspuns.length * 5 + 8);
-          doc.text(liniiRaspuns, marginX, y);
-          y += liniiRaspuns.length * 5;
-
-          if (!intr.corect && intr.raspunsCorect) {
-            const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
-            verificaSpatiu(liniiCorect.length * 5 + 6);
-            doc.text(liniiCorect, marginX, y);
-            y += liniiCorect.length * 5;
+          if (intr.corect) {
+            doc.setTextColor(22, 163, 74);
+          } else {
+            doc.setTextColor(220, 38, 38);
           }
-          y += 5;
-        });
-      }
-    } else {
-      doc.text("Testul general nu a fost sustinut inca.", marginX, y);
-    }
-
-    doc.save(`raport-${angajat.nume.replace(/\s+/g, "-")}.pdf`);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={genereaza}
-      className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50"
-    >
-      <FileText size={12} /> PDF
-    </button>
-  );
-}
+          doc.text(liniiRaspuns,
