@@ -1,0 +1,45 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/app/auth/actions";
+import { revalidatePath } from "next/cache";
+
+export type FinalizeazaTestFinalInput = {
+  testFinalId: string;
+  scor: number;
+  dinTotal: number;
+  semnatura: string;
+};
+
+export type FinalizeazaTestFinalResult = { error?: string; success?: boolean };
+
+export async function finalizeazaTestFinal(
+  input: FinalizeazaTestFinalInput
+): Promise<FinalizeazaTestFinalResult> {
+  const angajat = await getSession();
+  if (!angajat) return { error: "Sesiune expirata. Te rugam sa te autentifici din nou." };
+  if (!input.semnatura) return { error: "Semnatura este obligatorie." };
+
+  const existent = await prisma.testFinalResult.findUnique({
+    where: { testFinalId_angajatId: { testFinalId: input.testFinalId, angajatId: angajat.id } },
+  });
+  if (existent) return { error: "Ai sustinut deja acest test." };
+
+  const promovat = input.dinTotal > 0 && input.scor / input.dinTotal >= 0.7;
+
+  await prisma.testFinalResult.create({
+    data: {
+      testFinalId: input.testFinalId,
+      angajatId: angajat.id,
+      scor: input.scor,
+      dinTotal: input.dinTotal,
+      promovat,
+      semnatura: input.semnatura,
+    },
+  });
+
+  revalidatePath("/dashboard/testare");
+  revalidatePath("/dashboard/testare/general");
+  revalidatePath("/admin/testare");
+  return { success: true };
+}

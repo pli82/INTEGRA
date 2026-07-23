@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, PieChart, Award, ClipboardList, Download, FileText, BookOpen, HelpCircle } from "lucide-react";
+import { Users, PieChart, Award, ClipboardList, ClipboardCheck, Download, FileText, BookOpen, HelpCircle } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard, StatusBadge, ProgressBar } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
@@ -12,7 +12,17 @@ const FALLBACK_ROWS = [
   { nume: "Radu Petrescu", functie: "Referent", structura: "DGRU", progres: 100, status: "PROMOVAT" as const, scor: "8/10" },
 ];
 
+async function getTestFinal() {
+  try {
+    const t = await prisma.testFinal.findFirst({ orderBy: { createdAt: "desc" } });
+    return t ? { id: t.id, activ: t.activ } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function getData() {
+  const testFinal = await getTestFinal();
   try {
     const [totalAngajati, cursuriList, teste, enrollments] = await Promise.all([
       prisma.angajat.count({ where: { role: "ANGAJAT" } }),
@@ -57,6 +67,7 @@ async function getData() {
       testeCount: teste || 152,
       cursuriList,
       rows: rows.length ? rows : FALLBACK_ROWS,
+      testFinal,
     };
   } catch {
     return {
@@ -68,6 +79,7 @@ async function getData() {
       testeCount: 152,
       cursuriList: [] as { id: string; titlu: string }[],
       rows: FALLBACK_ROWS,
+      testFinal,
     };
   }
 }
@@ -191,9 +203,24 @@ export default async function AdminPage() {
                   </Link>
                 ))}
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
+              <div className="mb-4 flex items-center gap-2 text-sm text-slate-700">
                 <HelpCircle size={16} /> Teste si intrebari
                 <span className="font-medium text-slate-900">{data.testeCount}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <ClipboardCheck size={16} /> Test general
+                  {data.testFinal ? (
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${data.testFinal.activ ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                      {data.testFinal.activ ? "Activ" : "Inactiv"}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Neconfigurat</span>
+                  )}
+                </div>
+                <Link href="/admin/testare" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-700">
+                  {data.testFinal ? "Configureaza" : "Adauga test general"}
+                </Link>
               </div>
             </div>
           </div>

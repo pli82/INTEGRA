@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClipboardCheck, CheckCircle2, Lock } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/app/auth/actions";
 
 const FALLBACK = {
   angajat: { nume: "Andrei Popescu", functie: "Consilier" },
@@ -18,6 +19,8 @@ const FALLBACK = {
       scor: "9/10",
     },
   ],
+  testFinal: null as { id: string; titlu: string; nrIntrebari: number } | null,
+  testFinalRezultat: null as { scor: number; dinTotal: number; promovat: boolean } | null,
 };
 
 async function getData() {
@@ -51,9 +54,22 @@ async function getData() {
       };
     });
 
+    const sesiune = await getSession();
+    const testFinal = await prisma.testFinal.findFirst({ orderBy: { createdAt: "desc" } });
+    const testFinalRezultat =
+      sesiune && testFinal
+        ? await prisma.testFinalResult.findUnique({
+            where: { testFinalId_angajatId: { testFinalId: testFinal.id, angajatId: sesiune.id } },
+          })
+        : null;
+
     return {
       angajat: { nume: `${angajat.prenume} ${angajat.nume}`, functie: angajat.functie },
       teste: lista.length ? lista : FALLBACK.teste,
+      testFinal: testFinal && testFinal.activ ? { id: testFinal.id, titlu: testFinal.titlu, nrIntrebari: testFinal.nrIntrebari } : null,
+      testFinalRezultat: testFinalRezultat
+        ? { scor: testFinalRezultat.scor, dinTotal: testFinalRezultat.dinTotal, promovat: testFinalRezultat.promovat }
+        : null,
     };
   } catch {
     return FALLBACK;
@@ -76,6 +92,35 @@ export default async function TestarePage() {
         <p className="mb-6 text-sm text-slate-500">
           Testele asociate modulelor tale de instruire.
         </p>
+
+        {data.testFinal && (
+          <div className="mb-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 p-5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                <ClipboardCheck size={22} />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-slate-900">{data.testFinal.titlu}</div>
+                <div className="text-xs text-slate-500">Test general final · {data.testFinal.nrIntrebari} întrebări din toate cursurile</div>
+              </div>
+            </div>
+            {data.testFinalRezultat ? (
+              <span
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  data.testFinalRezultat.promovat
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-red-200 bg-red-50 text-red-700"
+                }`}
+              >
+                {data.testFinalRezultat.promovat ? "Promovat" : "Respins"} {data.testFinalRezultat.scor}/{data.testFinalRezultat.dinTotal}
+              </span>
+            ) : (
+              <Link href="/dashboard/testare/general" className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+                Începe testul general
+              </Link>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-4">
           {data.teste.map((t) => (

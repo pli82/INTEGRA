@@ -2,10 +2,11 @@ import { ClipboardList, CheckCircle2, XCircle } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { TestFinalForm } from "./TestFinalForm";
 
 async function getData() {
   try {
-    const [teste, rezultate, testeInAsteptare] = await Promise.all([
+    const [teste, rezultate, testeInAsteptare, testFinal] = await Promise.all([
       prisma.test.findMany({ include: { curs: true, rezultate: true } }),
       prisma.testResult.findMany({
         include: { angajat: true, test: { include: { curs: true } } },
@@ -13,6 +14,7 @@ async function getData() {
         take: 20,
       }),
       prisma.enrollment.count({ where: { status: "IN_CURS" } }),
+      prisma.testFinal.findFirst({ orderBy: { createdAt: "desc" }, include: { rezultate: true } }),
     ]);
 
     const totalPromovati = rezultate.filter((r) => r.promovat).length;
@@ -39,14 +41,25 @@ async function getData() {
       })),
       testeInAsteptare,
       rataPromovare,
+      testFinal: testFinal
+        ? {
+            id: testFinal.id,
+            titlu: testFinal.titlu,
+            activ: testFinal.activ,
+            nrIntrebari: testFinal.nrIntrebari,
+            dataLimita: testFinal.dataLimita,
+            totalSustineri: testFinal.rezultate.length,
+          }
+        : null,
     };
   } catch (e) {
     console.error("Eroare getData admin testare:", e);
     return {
-      teste: [],
-      rezultate: [],
+      teste: [] as { id: string; titlu: string; curs: string; nrIntrebari: number; durataMin: number; totalSustineri: number }[],
+      rezultate: [] as { id: string; angajat: string; test: string; curs: string; scor: number; dinTotal: number; promovat: boolean; data: string }[],
       testeInAsteptare: 0,
       rataPromovare: 0,
+      testFinal: null,
     };
   }
 }
@@ -62,6 +75,10 @@ export default async function AdminTestarePage() {
         <p className="mb-6 text-sm text-slate-500">
           Testele configurate si rezultatele recente ale angajatilor.
         </p>
+
+        <div className="mb-6">
+          <TestFinalForm testFinal={data.testFinal} />
+        </div>
 
         <div className="mb-6 grid grid-cols-3 gap-4">
           <StatCard icon={<ClipboardList size={20} />} label="Teste configurate" value={String(data.teste.length)} />
