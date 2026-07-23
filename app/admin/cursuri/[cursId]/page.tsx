@@ -12,7 +12,10 @@ async function getData(cursId: string) {
     const totalInscrisi = await prisma.enrollment.count({ where: { cursId } });
     const totalPromovati = await prisma.enrollment.count({ where: { cursId, status: "PROMOVAT" } });
     return { curs, totalInscrisi, totalPromovati };
-  } catch { return null; }
+  } catch (e) {
+    console.error("Eroare getData admin curs:", e);
+    return null;
+  }
 }
 
 const iconForTip = (tip: string) => {
