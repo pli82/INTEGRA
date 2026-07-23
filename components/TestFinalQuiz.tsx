@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { Check, X, Download } from "lucide-react";
 import clsx from "clsx";
-import { finalizeazaTestFinal } from "@/app/dashboard/testare/general/actions";
+import { finalizeazaTestFinal } from "@/app/dashboard/testare/finalActions";
 import { inregistreazaFontRomanesc } from "@/lib/pdfFont";
 
 type Optiune = { id: string; text: string; corecta: boolean };
@@ -13,10 +13,14 @@ type Angajat = { nume: string; prenume: string; functie: string; structura: stri
 
 export function TestFinalQuiz({
   testFinalId,
+  titluTest,
+  cursTitlu,
   intrebari,
   angajat,
 }: {
   testFinalId: string;
+  titluTest: string;
+  cursTitlu: string;
   intrebari: Intrebare[];
   angajat: Angajat;
 }) {
@@ -117,7 +121,7 @@ export function TestFinalQuiz({
     };
 
     doc.setFontSize(16);
-    doc.text("Certificat de finalizare - Test general de evaluare", marginX, y);
+    doc.text(`Certificat de finalizare - ${titluTest}`, marginX, y);
     y += 12;
 
     doc.setFontSize(11);
@@ -126,6 +130,7 @@ export function TestFinalQuiz({
       ["Prenume", angajat.prenume],
       ["Functie", angajat.functie],
       ["Structura", angajat.structura],
+      ["Curs", cursTitlu],
       ["Data sustinerii", new Date().toLocaleDateString("ro-RO")],
       ["Scor obtinut", `${scor} / ${intrebari.length}`],
       ["Rezultat", promovat ? "Promovat" : "Respins"],
@@ -184,7 +189,7 @@ export function TestFinalQuiz({
       y += 6;
     });
 
-    doc.save(`certificat-test-general-${angajat.nume}-${angajat.prenume}.pdf`);
+    doc.save(`certificat-test-final-${cursTitlu.replace(/\s+/g, "-")}-${angajat.nume}-${angajat.prenume}.pdf`);
   };
 
   const construiesteDetaliu = () => {
@@ -234,7 +239,7 @@ export function TestFinalQuiz({
   if (intrebari.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-        Nu exista inca intrebari disponibile pentru testul general.
+        Nu exista inca intrebari disponibile pentru acest test final.
       </div>
     );
   }
