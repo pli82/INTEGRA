@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Video, FileText, Presentation, Trash2, ArrowLeft } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { prisma } from "@/lib/prisma";
 import { adaugaMaterial, stergeMaterial } from "@/app/dashboard/actions";
 import { stergeIntrebare } from "./actions";
+import { stergeCurs } from "@/app/admin/cursuri/actions";
 import { IntrebareForm } from "./IntrebareForm";
 
 async function getData(cursId: string) {
@@ -35,7 +37,17 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar variant="admin" activeHref="/admin" />
       <main className="flex-1 p-8">
-        <div className="mb-6"><Link href="/admin" className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={16} /> Inapoi la admin</Link></div>
+        <div className="mb-6 flex items-center justify-between">
+          <Link href="/admin/cursuri" className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={16} /> Inapoi la cursuri</Link>
+          <form action={stergeCurs.bind(null, curs.id)}>
+            <ConfirmButton
+              mesaj={`Sigur vrei sa stergi cursul "${curs.titlu}"? Se sterg definitiv lectiile, materialele, intrebarile si inscrierile angajatilor la acest curs. Actiunea nu poate fi anulata.`}
+              className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              <Trash2 size={13} /> Sterge cursul
+            </ConfirmButton>
+          </form>
+        </div>
         <h1 className="mb-1 text-2xl font-medium text-slate-900">{curs.titlu}</h1>
         <p className="mb-6 text-sm text-slate-500">{curs.descriere}</p>
         <div className="mb-6 grid grid-cols-3 gap-4">
@@ -48,7 +60,7 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-4 text-base font-medium text-slate-900">Materiale existente</h2>
               {curs.materiale.length === 0 ? <p className="text-sm text-slate-400">Niciun material adaugat inca.</p> : (
-                <ul className="flex flex-col gap-2">{curs.materiale.map((m) => (<li key={m.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3"><div className="flex items-center gap-3">{iconForTip(m.tip)}<span className="text-sm text-slate-700">{m.titlu}</span></div><form action={stergeMaterial.bind(null, m.id, curs.id)}><button type="submit" className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button></form></li>))}</ul>
+                <ul className="flex flex-col gap-2">{curs.materiale.map((m) => (<li key={m.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3"><div className="flex items-center gap-3">{iconForTip(m.tip)}<span className="text-sm text-slate-700">{m.titlu}</span></div><form action={stergeMaterial.bind(null, m.id, curs.id)}><ConfirmButton mesaj={`Stergi materialul "${m.titlu}"?`} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></ConfirmButton></form></li>))}</ul>
               )}
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-6">
@@ -66,7 +78,7 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
           <div className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="mb-4 text-base font-medium text-slate-900">Intrebari test intermediar <span className="text-sm font-normal text-slate-400">({curs.intrebari.length})</span></h2>
             {curs.intrebari.length === 0 ? <p className="mb-4 text-sm text-slate-400">Nu exista intrebari.</p> : (
-              <ul className="mb-4 flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "600px" }}>{curs.intrebari.map((q, i) => (<li key={q.id} className="rounded-lg border border-slate-100 p-4"><div className="mb-2 flex items-start justify-between gap-2"><p className="text-sm font-medium text-slate-800">{i + 1}. {q.enunt}</p><form action={stergeIntrebare.bind(null, q.id, curs.id)}><button type="submit" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button></form></div><ul className="flex flex-col gap-1">{q.optiuni.map((o) => (<li key={o.id} className={o.corecta ? "flex items-center gap-2 rounded px-2 py-1 text-xs bg-emerald-50 text-emerald-700" : "flex items-center gap-2 rounded px-2 py-1 text-xs text-slate-500"}>{o.corecta ? "✓" : "·"} {o.text}</li>))}</ul></li>))}</ul>
+              <ul className="mb-4 flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "600px" }}>{curs.intrebari.map((q, i) => (<li key={q.id} className="rounded-lg border border-slate-100 p-4"><div className="mb-2 flex items-start justify-between gap-2"><p className="text-sm font-medium text-slate-800">{i + 1}. {q.enunt}</p><form action={stergeIntrebare.bind(null, q.id, curs.id)}><ConfirmButton mesaj="Stergi aceasta intrebare?" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></ConfirmButton></form></div><ul className="flex flex-col gap-1">{q.optiuni.map((o) => (<li key={o.id} className={o.corecta ? "flex items-center gap-2 rounded px-2 py-1 text-xs bg-emerald-50 text-emerald-700" : "flex items-center gap-2 rounded px-2 py-1 text-xs text-slate-500"}>{o.corecta ? "✓" : "·"} {o.text}</li>))}</ul></li>))}</ul>
             )}
             <IntrebareForm cursId={curs.id} />
           </div>

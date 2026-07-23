@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { Save, Power } from "lucide-react";
-import { salveazaTestFinal, comutaActivTestFinal, type TestFinalState } from "./actions";
+import { Save, Power, Trash2 } from "lucide-react";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { salveazaTestFinal, comutaActivTestFinal, stergeTestFinal, type TestFinalState } from "./actions";
 
 const initialState: TestFinalState = {};
 
@@ -26,18 +27,28 @@ export function TestFinalForm({ testFinal }: { testFinal: TestFinal | null }) {
           <p className="text-xs text-slate-400">Test cu intrebari din toate cursurile, sustinut o singura data de fiecare angajat.</p>
         </div>
         {testFinal && (
-          <form action={comutaActivTestFinal.bind(null, testFinal.id, testFinal.activ)}>
-            <button
-              type="submit"
-              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium ${
-                testFinal.activ
-                  ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-              }`}
-            >
-              <Power size={13} /> {testFinal.activ ? "Activ - dezactiveaza" : "Inactiv - activeaza"}
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <form action={comutaActivTestFinal.bind(null, testFinal.id, testFinal.activ)}>
+              <button
+                type="submit"
+                className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium ${
+                  testFinal.activ
+                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+              >
+                <Power size={13} /> {testFinal.activ ? "Activ - dezactiveaza" : "Inactiv - activeaza"}
+              </button>
+            </form>
+            <form action={stergeTestFinal.bind(null, testFinal.id)}>
+              <ConfirmButton
+                mesaj={`Sigur vrei sa stergi definitiv testul general "${testFinal.titlu}"? Se sterg si cele ${testFinal.totalSustineri} rezultate deja inregistrate. Actiunea nu poate fi anulata.`}
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={13} />
+              </ConfirmButton>
+            </form>
+          </div>
         )}
       </div>
 

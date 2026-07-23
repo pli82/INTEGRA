@@ -36,3 +36,11 @@ export async function comutaActivTestFinal(id: string, activ: boolean): Promise<
   revalidatePath("/admin/testare");
   revalidatePath("/dashboard/testare");
 }
+
+export async function stergeTestFinal(id: string): Promise<void> {
+  await prisma.testFinalResult.deleteMany({ where: { testFinalId: id } });
+  await prisma.testFinal.delete({ where: { id } });
+  revalidatePath("/admin");
+  revalidatePath("/admin/testare");
+  revalidatePath("/dashboard/testare");
+}

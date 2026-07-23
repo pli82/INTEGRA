@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ShieldCheck, Settings, AlertTriangle, Plus, ChevronRight } from "lucide-react";
+import { ShieldCheck, Settings, AlertTriangle, Plus, ChevronRight, Trash2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { prisma } from "@/lib/prisma";
+import { stergeCurs } from "./actions";
 
 async function getData() {
   try {
@@ -68,13 +70,12 @@ export default async function AdminCursuriPage() {
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {cursuri.map((c) => (
-              <Link
+              <div
                 key={c.id}
-                href={`/admin/cursuri/${c.id}`}
                 className="group flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 hover:border-blue-300 hover:shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/admin/cursuri/${c.id}`} className="flex flex-1 items-center gap-3">
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bgFor(c.icon)}`}>
                       {iconFor(c.icon)}
                     </div>
@@ -82,16 +83,28 @@ export default async function AdminCursuriPage() {
                       <h2 className="text-sm font-medium text-slate-900 group-hover:text-blue-700">{c.titlu}</h2>
                       {c.descriere && <p className="text-xs text-slate-500">{c.descriere}</p>}
                     </div>
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <form action={stergeCurs.bind(null, c.id)}>
+                      <ConfirmButton
+                        mesaj={`Sigur vrei sa stergi cursul "${c.titlu}"? Se sterg definitiv lectiile, materialele, intrebarile si inscrierile angajatilor la acest curs. Actiunea nu poate fi anulata.`}
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 size={16} />
+                      </ConfirmButton>
+                    </form>
+                    <Link href={`/admin/cursuri/${c.id}`}>
+                      <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500" />
+                    </Link>
                   </div>
-                  <ChevronRight size={18} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-500" />
                 </div>
-                <div className="flex gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                <Link href={`/admin/cursuri/${c.id}`} className="flex gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
                   <span>{c.totalLectii} lectii</span>
                   <span>{c.totalIntrebari} intrebari</span>
                   <span>{c.totalInscrisi} inscrisi</span>
                   <span className="text-emerald-600">{c.totalPromovati} promovati</span>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}
