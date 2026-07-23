@@ -45,6 +45,7 @@ model Angajat {
   fotoUrl            String?       @db.Text
   enrollments        Enrollment[]
   testResults        TestResult[]
+  testFinalResults   TestFinalResult[]
   createdAt          DateTime      @default(now())
 }
 
@@ -134,6 +135,31 @@ model Optiune {
   intrebareId String
   text        String
   corecta     Boolean   @default(false)
+}
+
+model TestFinal {
+  id          String            @id @default(cuid())
+  titlu       String            @default("Test general de evaluare")
+  activ       Boolean           @default(false)
+  nrIntrebari Int               @default(20)
+  dataLimita  DateTime?
+  createdAt   DateTime          @default(now())
+  rezultate   TestFinalResult[]
+}
+
+model TestFinalResult {
+  id          String    @id @default(cuid())
+  testFinal   TestFinal @relation(fields: [testFinalId], references: [id])
+  testFinalId String
+  angajat     Angajat   @relation(fields: [angajatId], references: [id])
+  angajatId   String
+  scor        Int
+  dinTotal    Int
+  promovat    Boolean
+  semnatura   String    @db.Text
+  susTinutLa  DateTime  @default(now())
+
+  @@unique([testFinalId, angajatId])
 }
 
 model ActivitateLog {
