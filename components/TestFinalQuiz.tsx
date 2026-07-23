@@ -160,25 +160,26 @@ export function TestFinalQuiz({
       y += liniiEnunt.length * 5 + 2;
 
       doc.setFont("NotoSans", "normal");
-      const raspunsText = `Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"} - ${corect ? "CORECT" : "GRESIT"}`;
-      const liniiRaspuns = doc.splitTextToSize(raspunsText, maxWidth);
-      verificaSpatiu(liniiRaspuns.length * 5 + 10);
-      if (corect) {
-        doc.setTextColor(22, 163, 74);
-      } else {
-        doc.setTextColor(220, 38, 38);
-      }
+      const liniiRaspuns = doc.splitTextToSize(`Raspuns dat: ${optiuneAleasa?.text ?? "(fara raspuns)"}`, maxWidth);
+      verificaSpatiu(liniiRaspuns.length * 5 + 14);
       doc.text(liniiRaspuns, marginX, y);
       y += liniiRaspuns.length * 5;
+
+      if (corect) {
+        doc.setTextColor(22, 163, 74);
+        doc.text("CORECT", marginX, y);
+      } else {
+        doc.setTextColor(220, 38, 38);
+        doc.text("GRESIT", marginX, y);
+      }
       doc.setTextColor(0, 0, 0);
+      y += 5;
 
       if (optiuneCorecta) {
         const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${optiuneCorecta.text}`, maxWidth);
         verificaSpatiu(liniiCorect.length * 5 + 8);
-        doc.setTextColor(22, 163, 74);
         doc.text(liniiCorect, marginX, y);
         y += liniiCorect.length * 5;
-        doc.setTextColor(0, 0, 0);
       }
       y += 6;
     });

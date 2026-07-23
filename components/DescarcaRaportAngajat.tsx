@@ -111,25 +111,26 @@ export function DescarcaRaportAngajat({
           y += liniiEnunt.length * 5 + 2;
 
           doc.setFont("NotoSans", "normal");
-          const raspunsText = `Raspuns dat: ${intr.raspunsAles}`;
-          const liniiRaspuns = doc.splitTextToSize(raspunsText, maxWidth);
-          verificaSpatiu(liniiRaspuns.length * 5 + 8);
-          if (intr.corect) {
-            doc.setTextColor(22, 163, 74);
-          } else {
-            doc.setTextColor(220, 38, 38);
-          }
+          const liniiRaspuns = doc.splitTextToSize(`Raspuns dat: ${intr.raspunsAles}`, maxWidth);
+          verificaSpatiu(liniiRaspuns.length * 5 + 12);
           doc.text(liniiRaspuns, marginX, y);
           y += liniiRaspuns.length * 5;
+
+          if (intr.corect) {
+            doc.setTextColor(22, 163, 74);
+            doc.text("CORECT", marginX, y);
+          } else {
+            doc.setTextColor(220, 38, 38);
+            doc.text("GRESIT", marginX, y);
+          }
           doc.setTextColor(0, 0, 0);
+          y += 5;
 
           if (intr.raspunsCorect) {
             const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
             verificaSpatiu(liniiCorect.length * 5 + 6);
-            doc.setTextColor(22, 163, 74);
             doc.text(liniiCorect, marginX, y);
             y += liniiCorect.length * 5;
-            doc.setTextColor(0, 0, 0);
           }
           y += 5;
         });
