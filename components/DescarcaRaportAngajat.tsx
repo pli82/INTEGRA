@@ -119,4 +119,35 @@ export function DescarcaRaportAngajat({
           } else {
             doc.setTextColor(220, 38, 38);
           }
-          doc.text(liniiRaspuns,
+          doc.text(liniiRaspuns, marginX, y);
+          y += liniiRaspuns.length * 5;
+          doc.setTextColor(0, 0, 0);
+
+          if (intr.raspunsCorect) {
+            const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
+            verificaSpatiu(liniiCorect.length * 5 + 6);
+            doc.setTextColor(22, 163, 74);
+            doc.text(liniiCorect, marginX, y);
+            y += liniiCorect.length * 5;
+            doc.setTextColor(0, 0, 0);
+          }
+          y += 5;
+        });
+      }
+    } else {
+      doc.text("Testul general nu a fost sustinut inca.", marginX, y);
+    }
+
+    doc.save(`raport-${angajat.nume.replace(/\s+/g, "-")}.pdf`);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={genereaza}
+      className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50"
+    >
+      <FileText size={12} /> PDF
+    </button>
+  );
+}
