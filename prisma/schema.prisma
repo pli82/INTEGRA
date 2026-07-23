@@ -157,6 +157,7 @@ model TestFinalResult {
   dinTotal    Int
   promovat    Boolean
   semnatura   String    @db.Text
+  raspunsuriDetaliu String? @db.Text
   susTinutLa  DateTime  @default(now())
 
   @@unique([testFinalId, angajatId])

@@ -3,7 +3,8 @@
 import { FileText } from "lucide-react";
 
 type CursRand = { titlu: string; progres: number; status: string };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean } | null;
+type IntrebareDetaliu = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
+type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliu[] } | null;
 
 const statusLabel: Record<string, string> = {
   PROMOVAT: "Promovat",
@@ -25,7 +26,17 @@ export function DescarcaRaportAngajat({
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     const marginX = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - marginX * 2;
     let y = 20;
+
+    const verificaSpatiu = (necesar: number) => {
+      if (y + necesar > pageHeight - 15) {
+        doc.addPage();
+        y = 20;
+      }
+    };
 
     doc.setFontSize(16);
     doc.text("Raport de instruire - angajat", marginX, y);
@@ -45,6 +56,7 @@ export function DescarcaRaportAngajat({
     }
 
     y += 6;
+    verificaSpatiu(14);
     doc.setFontSize(13);
     doc.text("Progres pe cursuri", marginX, y);
     y += 8;
@@ -54,6 +66,7 @@ export function DescarcaRaportAngajat({
       y += 8;
     } else {
       for (const c of cursuri) {
+        verificaSpatiu(7);
         doc.text(c.titlu, marginX, y);
         doc.text(`${c.progres}% - ${statusLabel[c.status] ?? c.status}`, 130, y);
         y += 7;
@@ -61,6 +74,7 @@ export function DescarcaRaportAngajat({
     }
 
     y += 6;
+    verificaSpatiu(14);
     doc.setFontSize(13);
     doc.text("Test general de evaluare", marginX, y);
     y += 8;
@@ -69,6 +83,40 @@ export function DescarcaRaportAngajat({
       doc.text(`Scor: ${testFinal.scor} / ${testFinal.dinTotal}`, marginX, y);
       y += 7;
       doc.text(`Rezultat: ${testFinal.promovat ? "Promovat" : "Respins"}`, marginX, y);
+      y += 10;
+
+      if (testFinal.intrebari.length > 0) {
+        verificaSpatiu(10);
+        doc.setFontSize(12);
+        doc.text("Detaliu intrebari si raspunsuri", marginX, y);
+        y += 9;
+
+        doc.setFontSize(9.5);
+        testFinal.intrebari.forEach((intr, i) => {
+          const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
+          verificaSpatiu(liniiEnunt.length * 5 + 14);
+          doc.setFont("helvetica", "bold");
+          doc.text(liniiEnunt, marginX, y);
+          y += liniiEnunt.length * 5 + 2;
+
+          doc.setFont("helvetica", "normal");
+          const liniiRaspuns = doc.splitTextToSize(
+            `Raspuns dat: ${intr.raspunsAles} - ${intr.corect ? "Corect" : "Gresit"}`,
+            maxWidth
+          );
+          verificaSpatiu(liniiRaspuns.length * 5 + 8);
+          doc.text(liniiRaspuns, marginX, y);
+          y += liniiRaspuns.length * 5;
+
+          if (!intr.corect && intr.raspunsCorect) {
+            const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
+            verificaSpatiu(liniiCorect.length * 5 + 6);
+            doc.text(liniiCorect, marginX, y);
+            y += liniiCorect.length * 5;
+          }
+          y += 5;
+        });
+      }
     } else {
       doc.text("Testul general nu a fost sustinut inca.", marginX, y);
     }

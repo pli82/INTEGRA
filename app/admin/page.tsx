@@ -6,7 +6,8 @@ import { DescarcaRaportAngajat } from "@/components/DescarcaRaportAngajat";
 import { prisma } from "@/lib/prisma";
 
 type CursRand = { titlu: string; progres: number; status: string };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean } | null;
+type IntrebareDetaliuRand = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
+type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliuRand[] } | null;
 
 const FALLBACK_ROWS = [
   { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
@@ -72,7 +73,22 @@ async function getData() {
           status: e.status,
           scor: "—",
           cursuri: cursuriPerAngajat.get(e.angajatId) ?? [],
-          testFinal: tf ? { scor: tf.scor, dinTotal: tf.dinTotal, promovat: tf.promovat } : null,
+          testFinal: tf
+            ? {
+                scor: tf.scor,
+                dinTotal: tf.dinTotal,
+                promovat: tf.promovat,
+                intrebari: tf.raspunsuriDetaliu
+                  ? (() => {
+                      try {
+                        return JSON.parse(tf.raspunsuriDetaliu) as IntrebareDetaliuRand[];
+                      } catch {
+                        return [];
+                      }
+                    })()
+                  : [],
+              }
+            : null,
         };
       });
 

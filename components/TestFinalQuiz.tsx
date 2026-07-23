@@ -178,6 +178,20 @@ export function TestFinalQuiz({
     doc.save(`certificat-test-general-${angajat.nume}-${angajat.prenume}.pdf`);
   };
 
+  const construiesteDetaliu = () => {
+    return intrebari.map((intr) => {
+      const raspunsAlesId = raspunsuriRef.current[intr.id];
+      const optiuneAleasa = intr.optiuni.find((o) => o.id === raspunsAlesId);
+      const optiuneCorecta = intr.optiuni.find((o) => o.corecta);
+      return {
+        enunt: intr.enunt,
+        raspunsAles: optiuneAleasa?.text ?? "(fara raspuns)",
+        raspunsCorect: optiuneCorecta?.text ?? "",
+        corect: !!optiuneAleasa?.corecta,
+      };
+    });
+  };
+
   const trimiteTestul = async () => {
     const canvas = canvasRef.current;
     if (!canvas || semnaturaGoala) {
@@ -193,6 +207,7 @@ export function TestFinalQuiz({
       scor,
       dinTotal: intrebari.length,
       semnatura,
+      raspunsuriDetaliu: construiesteDetaliu(),
     });
 
     if (rezultat.error) {
