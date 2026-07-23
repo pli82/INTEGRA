@@ -2,14 +2,18 @@ import Link from "next/link";
 import { Users, PieChart, Award, ClipboardList, ClipboardCheck, Download, FileText, BookOpen, HelpCircle } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard, StatusBadge, ProgressBar } from "@/components/ui";
+import { DescarcaRaportAngajat } from "@/components/DescarcaRaportAngajat";
 import { prisma } from "@/lib/prisma";
 
+type CursRand = { titlu: string; progres: number; status: string };
+type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean } | null;
+
 const FALLBACK_ROWS = [
-  { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10" },
-  { nume: "Elena Popescu", functie: "Expert", structura: "Directia economica", progres: 80, status: "IN_CURS" as const, scor: "—" },
-  { nume: "Mihai Dumitru", functie: "Inspector", structura: "Serviciul IT", progres: 100, status: "PROMOVAT" as const, scor: "10/10" },
-  { nume: "Ioana Marinescu", functie: "Consilier", structura: "Cabinet presedinte", progres: 60, status: "IN_CURS" as const, scor: "—" },
-  { nume: "Radu Petrescu", functie: "Referent", structura: "DGRU", progres: 100, status: "PROMOVAT" as const, scor: "8/10" },
+  { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
+  { nume: "Elena Popescu", functie: "Expert", structura: "Directia economica", progres: 80, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
+  { nume: "Mihai Dumitru", functie: "Inspector", structura: "Serviciul IT", progres: 100, status: "PROMOVAT" as const, scor: "10/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
+  { nume: "Ioana Marinescu", functie: "Consilier", structura: "Cabinet presedinte", progres: 60, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
+  { nume: "Radu Petrescu", functie: "Referent", structura: "DGRU", progres: 100, status: "PROMOVAT" as const, scor: "8/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
 ];
 
 async function getTestFinal() {
@@ -24,13 +28,14 @@ async function getTestFinal() {
 async function getData() {
   const testFinal = await getTestFinal();
   try {
-    const [totalAngajati, cursuriList, teste, enrollments] = await Promise.all([
+    const [totalAngajati, cursuriList, teste, enrollments, testFinalRezultate] = await Promise.all([
       prisma.angajat.count({ where: { role: "ANGAJAT" } }),
       prisma.curs.findMany({ orderBy: { ordine: "asc" } }),
       prisma.test.count(),
       prisma.enrollment.findMany({
         include: { angajat: { include: { structura: true } }, curs: true },
       }),
+      prisma.testFinalResult.findMany(),
     ]);
 
     if (enrollments.length === 0) throw new Error("no data");
@@ -47,16 +52,29 @@ async function getData() {
 
     const testeInAsteptare = enrollments.filter((e) => e.status === "IN_CURS").length;
 
+    const cursuriPerAngajat = new Map<string, CursRand[]>();
+    for (const e of enrollments) {
+      const lista = cursuriPerAngajat.get(e.angajatId) ?? [];
+      lista.push({ titlu: e.curs.titlu, progres: e.progresPct, status: e.status });
+      cursuriPerAngajat.set(e.angajatId, lista);
+    }
+    const testFinalPerAngajat = new Map(testFinalRezultate.map((r) => [r.angajatId, r]));
+
     const rows = enrollments
       .filter((e) => e.curs.titlu.includes("anti-mita") || e.curs.titlu.includes("Sistemul"))
-      .map((e) => ({
-        nume: e.angajat.prenume + " " + e.angajat.nume,
-        functie: e.angajat.functie,
-        structura: e.angajat.structura.nume,
-        progres: e.progresPct,
-        status: e.status,
-        scor: "—",
-      }));
+      .map((e) => {
+        const tf = testFinalPerAngajat.get(e.angajatId);
+        return {
+          nume: e.angajat.prenume + " " + e.angajat.nume,
+          functie: e.angajat.functie,
+          structura: e.angajat.structura.nume,
+          progres: e.progresPct,
+          status: e.status,
+          scor: "—",
+          cursuri: cursuriPerAngajat.get(e.angajatId) ?? [],
+          testFinal: tf ? { scor: tf.scor, dinTotal: tf.dinTotal, promovat: tf.promovat } : null,
+        };
+      });
 
     return {
       totalAngajati: totalAngajati || 1284,
@@ -160,9 +178,11 @@ export default async function AdminPage() {
                         {r.scor !== "—" && <span className="ml-1 text-xs text-slate-400">{r.scor}</span>}
                       </td>
                       <td className="py-3">
-                        <button className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-                          <FileText size={12} /> PDF
-                        </button>
+                        <DescarcaRaportAngajat
+                          angajat={{ nume: r.nume, functie: r.functie, structura: r.structura }}
+                          cursuri={r.cursuri}
+                          testFinal={r.testFinal}
+                        />
                       </td>
                     </tr>
                   ))}
