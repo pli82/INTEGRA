@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Presentation, Lock } from "lucide-react";
+import { BookOpen, Presentation, Lock } from "lucide-react";
 import { VideoMaterial } from "./VideoMaterial";
 
 type MaterialItem = { id: string; tip: "VIDEO" | "PDF" | "PPTX"; titlu: string; url: string };
@@ -110,7 +110,7 @@ export function CapitoleViewer({
         ) : selected.materiale.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-              <FileText size={24} />
+              <BookOpen size={24} />
             </div>
             <h3 className="text-base font-medium text-slate-900">{selected.titlu}</h3>
             <p className="text-sm text-slate-400">Niciun material disponibil pentru acest capitol inca.</p>
@@ -135,7 +135,7 @@ export function CapitoleViewer({
                 >
                   <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform group-hover:scale-105">
-                    {m.tip === "PDF" ? <FileText size={28} className="text-red-600" /> : <Presentation size={28} className="text-orange-600" />}
+                    {m.tip === "PDF" ? <BookOpen size={28} className="text-red-600" /> : <Presentation size={28} className="text-orange-600" />}
                   </div>
                   <p className="absolute bottom-3 left-3 text-sm font-medium text-white">{m.titlu}</p>
                   <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700">
