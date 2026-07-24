@@ -10,11 +10,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       request,
       onBeforeGenerateToken: async () => {
         return {
-          allowedContentTypes: [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "application/vnd.ms-powerpoint",
-          ],
           addRandomSuffix: true,
         };
       },
