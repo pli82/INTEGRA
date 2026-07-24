@@ -133,7 +133,25 @@ export function CapitoleViewer({
                       : "bg-gradient-to-br from-orange-500 to-amber-700")
                   }
                 >
-                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+                  <svg
+                    className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/15"
+                    viewBox="0 0 100 100"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M50 4 L90 18 V46 C90 70 72 88 50 96 C28 88 10 70 10 46 V18 Z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M32 50 L44 62 L70 34"
+                      stroke="white"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      opacity="0.9"
+                    />
+                  </svg>
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform group-hover:scale-105">
                     {m.tip === "PDF" ? <BookOpen size={28} className="text-red-600" /> : <Presentation size={28} className="text-orange-600" />}
                   </div>
