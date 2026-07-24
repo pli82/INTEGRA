@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/app/auth/actions";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_MATERIAL_BYTES = 20 * 1024 * 1024;
@@ -57,11 +58,12 @@ export async function stergeMaterial(materialId: string, cursId: string): Promis
 }
 
 export async function marcheazaVizualizat(cursId: string): Promise<void> {
-  const angajat = await prisma.angajat.findFirst({ where: { role: "ANGAJAT" } });
+  const angajat = await getSession();
   if (!angajat) return;
-  await prisma.enrollment.updateMany({
-    where: { angajatId: angajat.id, cursId },
-    data: { vizualizat: true },
+  await prisma.enrollment.upsert({
+    where: { angajatId_cursId: { angajatId: angajat.id, cursId } },
+    create: { angajatId: angajat.id, cursId, vizualizat: true },
+    update: { vizualizat: true },
   });
   revalidatePath(`/dashboard/cursuri/${cursId}`);
   revalidatePath("/dashboard/testare");
