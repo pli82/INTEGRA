@@ -23,6 +23,29 @@ export function CapitoleViewer({
   const [selectedId, setSelectedId] = useState<string | null>(capitoleNormale[0]?.id ?? null);
   const selected = capitoleNormale.find((l) => l.id === selectedId) ?? null;
 
+  const deschideMaterial = (url: string) => {
+    if (!url.startsWith("data:")) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    try {
+      const [header, base64] = url.split(",");
+      const mimeMatch = header.match(/data:([^;]+)/);
+      const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+      const byteChars = atob(base64);
+      const byteNumbers = new Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) {
+        byteNumbers[i] = byteChars.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-1 rounded-xl border border-slate-200 bg-white p-6">
@@ -98,9 +121,13 @@ export function CapitoleViewer({
               ) : (
                 <div key={m.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-6">
                   {m.tip === "PDF" ? <FileText size={20} className="text-red-500" /> : <Presentation size={20} className="text-orange-500" />}
-                  <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-700 hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => deschideMaterial(m.url)}
+                    className="text-sm font-medium text-blue-700 hover:underline"
+                  >
                     {m.titlu}
-                  </a>
+                  </button>
                 </div>
               )
             )}
