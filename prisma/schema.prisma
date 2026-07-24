@@ -91,10 +91,10 @@ model Enrollment {
 model Test {
   id            String        @id @default(cuid())
   curs          Curs          @relation(fields: [cursId], references: [id])
-  cursId        String
-  titlu         String
+  cursId        String        @unique
+  titlu         String        @default("Test intermediar")
   durataMin     Int           @default(15)
-  nrIntrebari   Int           @default(20)
+  nrIntrebari   Int           @default(30)
   dataLimita    DateTime?
   rezultate     TestResult[]
 }
