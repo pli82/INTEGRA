@@ -46,6 +46,7 @@ model Angajat {
   enrollments        Enrollment[]
   testResults        TestResult[]
   testFinalResults   TestFinalResult[]
+  lectiiProgres      LectieProgres[]
   createdAt          DateTime      @default(now())
 }
 
@@ -65,13 +66,14 @@ model Curs {
 }
 
 model Lectie {
-  id        String     @id @default(cuid())
-  curs      Curs       @relation(fields: [cursId], references: [id])
+  id        String          @id @default(cuid())
+  curs      Curs            @relation(fields: [cursId], references: [id])
   cursId    String
   titlu     String
-  ordine    Int        @default(0)
-  durataMin Int        @default(10)
+  ordine    Int             @default(0)
+  durataMin Int             @default(10)
   materiale Material[]
+  progrese  LectieProgres[]
 }
 
 model Enrollment {
@@ -174,4 +176,16 @@ model ActivitateLog {
   angajatId String
   mesaj     String
   createdAt DateTime @default(now())
+}
+
+model LectieProgres {
+  id           String    @id @default(cuid())
+  angajat      Angajat   @relation(fields: [angajatId], references: [id])
+  angajatId    String
+  lectie       Lectie    @relation(fields: [lectieId], references: [id])
+  lectieId     String
+  vizualizat   Boolean   @default(false)
+  vizualizatLa DateTime?
+
+  @@unique([angajatId, lectieId])
 }
