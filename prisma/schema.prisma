@@ -65,12 +65,13 @@ model Curs {
 }
 
 model Lectie {
-  id        String   @id @default(cuid())
-  curs      Curs     @relation(fields: [cursId], references: [id])
+  id        String     @id @default(cuid())
+  curs      Curs       @relation(fields: [cursId], references: [id])
   cursId    String
   titlu     String
-  ordine    Int      @default(0)
-  durataMin Int      @default(10)
+  ordine    Int        @default(0)
+  durataMin Int        @default(10)
+  materiale Material[]
 }
 
 model Enrollment {
@@ -115,6 +116,8 @@ model Material {
   id        String      @id @default(cuid())
   curs      Curs        @relation(fields: [cursId], references: [id])
   cursId    String
+  lectie    Lectie?     @relation(fields: [lectieId], references: [id])
+  lectieId  String?
   tip       MaterialTip
   titlu     String
   url       String      @db.Text
