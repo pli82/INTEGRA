@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/app/auth/actions";
 
 const MAX_BYTES = 2 * 1024 * 1024;
-const MAX_MATERIAL_BYTES = 20 * 1024 * 1024;
+const MAX_MATERIAL_BYTES = 3 * 1024 * 1024;
 
 export async function incarcaFotoProfil(formData: FormData) {
   const file = formData.get("foto") as File | null;
