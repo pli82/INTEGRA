@@ -72,7 +72,6 @@ export function CapitoleViewer({
                     {i < finalizate ? "✓" : i + 1}
                   </span>
                   <span className="flex-1">{l.titlu}</span>
-                  <span className="text-xs text-slate-400">{l.durataMin} min</span>
                 </button>
               </li>
             );
