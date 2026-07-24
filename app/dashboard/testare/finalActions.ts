@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/app/auth/actions";
 import { revalidatePath } from "next/cache";
 
+const PRAG_PROMOVARE = 10;
+
 export type IntrebareDetaliu = {
   enunt: string;
   raspunsAles: string;
@@ -36,7 +38,7 @@ export async function finalizeazaTestFinal(
   });
   if (existent) return { error: "Ai sustinut deja acest test." };
 
-  const promovat = input.dinTotal > 0 && input.scor / input.dinTotal >= 0.7;
+  const promovat = input.scor >= PRAG_PROMOVARE;
 
   await prisma.testFinalResult.create({
     data: {
