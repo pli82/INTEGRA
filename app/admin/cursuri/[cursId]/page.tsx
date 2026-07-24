@@ -9,6 +9,7 @@ import { stergeIntrebare } from "./actions";
 import { stergeCurs } from "@/app/admin/cursuri/actions";
 import { IntrebareForm } from "./IntrebareForm";
 import { TestFinalForm } from "@/app/admin/testare/TestFinalForm";
+import { TestIntermediarForm } from "@/app/admin/testare/TestIntermediarForm";
 
 async function getData(cursId: string) {
   try {
@@ -27,7 +28,15 @@ async function getData(cursId: string) {
           totalSustineri: testFinalRaw.rezultate.length,
         }
       : null;
-    return { curs, totalInscrisi, totalPromovati, testFinal };
+    const testIntermediarRaw = await prisma.test.findUnique({ where: { cursId }, include: { rezultate: true } });
+    const testIntermediar = testIntermediarRaw
+      ? {
+          titlu: testIntermediarRaw.titlu,
+          nrIntrebari: testIntermediarRaw.nrIntrebari,
+          totalRezultate: testIntermediarRaw.rezultate.length,
+        }
+      : null;
+    return { curs, totalInscrisi, totalPromovati, testFinal, testIntermediar };
   } catch (e) {
     console.error("Eroare getData admin curs:", e);
     return null;
@@ -44,7 +53,7 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
   const { cursId } = await params;
   const data = await getData(cursId);
   if (!data) return notFound();
-  const { curs, totalInscrisi, totalPromovati, testFinal } = data;
+  const { curs, totalInscrisi, totalPromovati, testFinal, testIntermediar } = data;
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar variant="admin" activeHref="/admin" />
@@ -95,7 +104,8 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
             <IntrebareForm cursId={curs.id} />
           </div>
         </div>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-6">
+          <TestIntermediarForm cursId={curs.id} testIntermediar={testIntermediar} totalIntrebariCurs={curs.intrebari.length} />
           <TestFinalForm cursId={curs.id} testFinal={testFinal} totalIntrebariCurs={curs.intrebari.length} />
         </div>
       </main>
