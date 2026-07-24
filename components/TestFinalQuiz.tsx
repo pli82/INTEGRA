@@ -11,6 +11,8 @@ type Optiune = { id: string; text: string; corecta: boolean };
 type Intrebare = { id: string; enunt: string; optiuni: Optiune[] };
 type Angajat = { nume: string; prenume: string; functie: string; structura: string };
 
+const PRAG_PROMOVARE = 10;
+
 export function TestFinalQuiz({
   testFinalId,
   titluTest,
@@ -106,7 +108,7 @@ export function TestFinalQuiz({
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     inregistreazaFontRomanesc(doc);
-    const promovat = scor / intrebari.length >= 0.7;
+    const promovat = scor >= PRAG_PROMOVARE;
     const marginX = 15;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -246,7 +248,7 @@ export function TestFinalQuiz({
 
   if (faza === "gata") {
     const r = rezultatFinalRef.current;
-    const promovat = r ? r.scor / r.dinTotal >= 0.7 : false;
+    const promovat = r ? r.scor >= PRAG_PROMOVARE : false;
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
         <h2 className="mb-2 text-xl font-medium text-slate-900">Test finalizat</h2>
