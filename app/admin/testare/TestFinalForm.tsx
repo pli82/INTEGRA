@@ -118,3 +118,9 @@ export function TestFinalForm({
             {testFinal && (
               <span className="text-xs text-slate-400">{testFinal.totalSustineri} angajati au sustinut testul pana acum.</span>
             )}
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
