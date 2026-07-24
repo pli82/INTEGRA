@@ -108,8 +108,11 @@ export function CapitoleViewer({
             Selecteaza un capitol din stanga pentru a vedea materialul.
           </div>
         ) : selected.materiale.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-2 text-base font-medium text-slate-900">{selected.titlu}</h3>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-slate-400">
+              <FileText size={24} />
+            </div>
+            <h3 className="text-base font-medium text-slate-900">{selected.titlu}</h3>
             <p className="text-sm text-slate-400">Niciun material disponibil pentru acest capitol inca.</p>
           </div>
         ) : (
@@ -119,16 +122,26 @@ export function CapitoleViewer({
               m.tip === "VIDEO" ? (
                 <VideoMaterial key={m.id} url={m.url} titlu={m.titlu} cursId={cursId} vizualizatInitial={vizualizat} />
               ) : (
-                <div key={m.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-6">
-                  {m.tip === "PDF" ? <FileText size={20} className="text-red-500" /> : <Presentation size={20} className="text-orange-500" />}
-                  <button
-                    type="button"
-                    onClick={() => deschideMaterial(m.url)}
-                    className="text-sm font-medium text-blue-700 hover:underline"
-                  >
-                    {m.titlu}
-                  </button>
-                </div>
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => deschideMaterial(m.url)}
+                  className={
+                    "group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl text-left " +
+                    (m.tip === "PDF"
+                      ? "bg-gradient-to-br from-red-500 to-rose-700"
+                      : "bg-gradient-to-br from-orange-500 to-amber-700")
+                  }
+                >
+                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform group-hover:scale-105">
+                    {m.tip === "PDF" ? <FileText size={28} className="text-red-600" /> : <Presentation size={28} className="text-orange-600" />}
+                  </div>
+                  <p className="absolute bottom-3 left-3 text-sm font-medium text-white">{m.titlu}</p>
+                  <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                    {m.tip === "PDF" ? "Deschide PDF" : "Deschide prezentarea"}
+                  </span>
+                </button>
               )
             )}
           </div>
