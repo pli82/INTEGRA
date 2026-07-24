@@ -51,6 +51,24 @@ export async function adaugaMaterial(formData: FormData): Promise<void> {
   revalidatePath(`/admin/cursuri/${cursId}`);
 }
 
+export async function adaugaMaterialCuUrl(input: {
+  cursId: string;
+  lectieId: string | null;
+  tip: "VIDEO" | "PDF" | "PPTX";
+  titlu: string;
+  url: string;
+}): Promise<{ error?: string; success?: boolean }> {
+  if (!input.cursId || !input.tip || !input.titlu || !input.url) {
+    return { error: "Toate campurile sunt obligatorii." };
+  }
+  await prisma.material.create({
+    data: { cursId: input.cursId, lectieId: input.lectieId, tip: input.tip, titlu: input.titlu, url: input.url },
+  });
+  revalidatePath(`/dashboard/cursuri/${input.cursId}`);
+  revalidatePath(`/admin/cursuri/${input.cursId}`);
+  return { success: true };
+}
+
 export async function stergeMaterial(materialId: string, cursId: string): Promise<void> {
   await prisma.material.delete({ where: { id: materialId } });
   revalidatePath(`/dashboard/cursuri/${cursId}`);
