@@ -5,7 +5,14 @@ import { inregistreazaFontRomanesc } from "@/lib/pdfFont";
 
 type CursRand = { titlu: string; progres: number; status: string };
 type IntrebareDetaliu = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliu[]; semnatura: string | null } | null;
+type TestFinalRand = {
+  cursTitlu: string;
+  scor: number;
+  dinTotal: number;
+  promovat: boolean;
+  semnatura: string | null;
+  intrebari: IntrebareDetaliu[];
+};
 
 const statusLabel: Record<string, string> = {
   PROMOVAT: "Promovat",
@@ -17,11 +24,11 @@ const statusLabel: Record<string, string> = {
 export function DescarcaRaportAngajat({
   angajat,
   cursuri,
-  testFinal,
+  testeFinale,
 }: {
   angajat: { nume: string; functie: string; structura: string };
   cursuri: CursRand[];
-  testFinal: TestFinalRand;
+  testeFinale: TestFinalRand[];
 }) {
   const genereaza = async () => {
     const { jsPDF } = await import("jspdf");
@@ -78,65 +85,74 @@ export function DescarcaRaportAngajat({
     y += 6;
     verificaSpatiu(14);
     doc.setFontSize(13);
-    doc.text("Test general de evaluare", marginX, y);
-    y += 8;
+    doc.text("Teste finale", marginX, y);
+    y += 9;
     doc.setFontSize(10);
-    if (testFinal) {
-      doc.text(`Scor: ${testFinal.scor} / ${testFinal.dinTotal}`, marginX, y);
-      y += 7;
-      doc.text(`Rezultat: ${testFinal.promovat ? "Promovat" : "Respins"}`, marginX, y);
+
+    if (testeFinale.length === 0) {
+      doc.text("Niciun test final sustinut inca.", marginX, y);
       y += 8;
-
-      if (testFinal.semnatura) {
-        verificaSpatiu(30);
-        doc.text("Semnatura:", marginX, y);
-        doc.addImage(testFinal.semnatura, "PNG", marginX, y + 4, 55, 22);
-        y += 30;
-      } else {
-        y += 2;
-      }
-
-      if (testFinal.intrebari.length > 0) {
-        verificaSpatiu(10);
-        doc.setFontSize(12);
-        doc.text("Detaliu intrebari si raspunsuri", marginX, y);
-        y += 9;
-
-        doc.setFontSize(9.5);
-        testFinal.intrebari.forEach((intr, i) => {
-          const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
-          verificaSpatiu(liniiEnunt.length * 5 + 14);
-          doc.setFont("NotoSans", "bold");
-          doc.text(liniiEnunt, marginX, y);
-          y += liniiEnunt.length * 5 + 2;
-
-          doc.setFont("NotoSans", "normal");
-          const liniiRaspuns = doc.splitTextToSize(`Raspuns dat: ${intr.raspunsAles}`, maxWidth);
-          verificaSpatiu(liniiRaspuns.length * 5 + 12);
-          doc.text(liniiRaspuns, marginX, y);
-          y += liniiRaspuns.length * 5;
-
-          if (intr.corect) {
-            doc.setTextColor(22, 163, 74);
-            doc.text("CORECT", marginX, y);
-          } else {
-            doc.setTextColor(220, 38, 38);
-            doc.text("GRESIT", marginX, y);
-          }
-          doc.setTextColor(0, 0, 0);
-          y += 5;
-
-          if (intr.raspunsCorect) {
-            const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
-            verificaSpatiu(liniiCorect.length * 5 + 6);
-            doc.text(liniiCorect, marginX, y);
-            y += liniiCorect.length * 5;
-          }
-          y += 5;
-        });
-      }
     } else {
-      doc.text("Testul general nu a fost sustinut inca.", marginX, y);
+      testeFinale.forEach((tf) => {
+        verificaSpatiu(20);
+        doc.setFont("NotoSans", "bold");
+        doc.text(tf.cursTitlu, marginX, y);
+        doc.setFont("NotoSans", "normal");
+        y += 6;
+        doc.text(`Scor: ${tf.scor} / ${tf.dinTotal}`, marginX, y);
+        y += 6;
+        doc.text(`Rezultat: ${tf.promovat ? "Promovat" : "Respins"}`, marginX, y);
+        y += 7;
+
+        if (tf.semnatura) {
+          verificaSpatiu(30);
+          doc.text("Semnatura:", marginX, y);
+          doc.addImage(tf.semnatura, "PNG", marginX, y + 4, 55, 22);
+          y += 30;
+        }
+
+        if (tf.intrebari.length > 0) {
+          verificaSpatiu(10);
+          doc.setFontSize(11);
+          doc.text("Detaliu intrebari si raspunsuri", marginX, y);
+          y += 8;
+
+          doc.setFontSize(9.5);
+          tf.intrebari.forEach((intr, i) => {
+            const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
+            verificaSpatiu(liniiEnunt.length * 5 + 14);
+            doc.setFont("NotoSans", "bold");
+            doc.text(liniiEnunt, marginX, y);
+            y += liniiEnunt.length * 5 + 2;
+
+            doc.setFont("NotoSans", "normal");
+            const liniiRaspuns = doc.splitTextToSize(`Raspuns dat: ${intr.raspunsAles}`, maxWidth);
+            verificaSpatiu(liniiRaspuns.length * 5 + 12);
+            doc.text(liniiRaspuns, marginX, y);
+            y += liniiRaspuns.length * 5;
+
+            if (intr.corect) {
+              doc.setTextColor(22, 163, 74);
+              doc.text("CORECT", marginX, y);
+            } else {
+              doc.setTextColor(220, 38, 38);
+              doc.text("GRESIT", marginX, y);
+            }
+            doc.setTextColor(0, 0, 0);
+            y += 5;
+
+            if (intr.raspunsCorect) {
+              const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
+              verificaSpatiu(liniiCorect.length * 5 + 6);
+              doc.text(liniiCorect, marginX, y);
+              y += liniiCorect.length * 5;
+            }
+            y += 5;
+          });
+          doc.setFontSize(10);
+        }
+        y += 8;
+      });
     }
 
     doc.save(`raport-${angajat.nume.replace(/\s+/g, "-")}.pdf`);

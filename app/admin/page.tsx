@@ -7,27 +7,35 @@ import { prisma } from "@/lib/prisma";
 
 type CursRand = { titlu: string; progres: number; status: string };
 type IntrebareDetaliuRand = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
-type TestFinalRand = { scor: number; dinTotal: number; promovat: boolean; intrebari: IntrebareDetaliuRand[]; semnatura: string | null } | null;
+type TestFinalRand = {
+  cursTitlu: string;
+  scor: number;
+  dinTotal: number;
+  promovat: boolean;
+  semnatura: string | null;
+  intrebari: IntrebareDetaliuRand[];
+};
 
 const FALLBACK_ROWS = [
-  { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
-  { nume: "Elena Popescu", functie: "Expert", structura: "Directia economica", progres: 80, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
-  { nume: "Mihai Dumitru", functie: "Inspector", structura: "Serviciul IT", progres: 100, status: "PROMOVAT" as const, scor: "10/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
-  { nume: "Ioana Marinescu", functie: "Consilier", structura: "Cabinet presedinte", progres: 60, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
-  { nume: "Radu Petrescu", functie: "Referent", structura: "DGRU", progres: 100, status: "PROMOVAT" as const, scor: "8/10", cursuri: [] as CursRand[], testFinal: null as TestFinalRand },
+  { nume: "Andrei Ionescu", functie: "Consilier", structura: "Directia juridica", progres: 100, status: "PROMOVAT" as const, scor: "9/10", cursuri: [] as CursRand[], testeFinale: [] as TestFinalRand[] },
+  { nume: "Elena Popescu", functie: "Expert", structura: "Directia economica", progres: 80, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testeFinale: [] as TestFinalRand[] },
+  { nume: "Mihai Dumitru", functie: "Inspector", structura: "Serviciul IT", progres: 100, status: "PROMOVAT" as const, scor: "10/10", cursuri: [] as CursRand[], testeFinale: [] as TestFinalRand[] },
+  { nume: "Ioana Marinescu", functie: "Consilier", structura: "Cabinet presedinte", progres: 60, status: "IN_CURS" as const, scor: "—", cursuri: [] as CursRand[], testeFinale: [] as TestFinalRand[] },
+  { nume: "Radu Petrescu", functie: "Referent", structura: "DGRU", progres: 100, status: "PROMOVAT" as const, scor: "8/10", cursuri: [] as CursRand[], testeFinale: [] as TestFinalRand[] },
 ];
 
-async function getTestFinal() {
+async function getTesteFinaleSumar() {
   try {
-    const t = await prisma.testFinal.findFirst({ orderBy: { createdAt: "desc" } });
-    return t ? { id: t.id, activ: t.activ } : null;
+    const cursuri = await prisma.curs.count();
+    const active = await prisma.testFinal.count({ where: { activ: true } });
+    return { active, total: cursuri };
   } catch {
-    return null;
+    return { active: 0, total: 0 };
   }
 }
 
 async function getData() {
-  const testFinal = await getTestFinal();
+  const testeFinaleSumar = await getTesteFinaleSumar();
   try {
     const [totalAngajati, cursuriList, teste, enrollments, testFinalRezultate] = await Promise.all([
       prisma.angajat.count({ where: { role: "ANGAJAT" } }),
@@ -36,7 +44,7 @@ async function getData() {
       prisma.enrollment.findMany({
         include: { angajat: { include: { structura: true } }, curs: true },
       }),
-      prisma.testFinalResult.findMany(),
+      prisma.testFinalResult.findMany({ include: { testFinal: { include: { curs: true } } } }),
     ]);
 
     if (enrollments.length === 0) throw new Error("no data");
@@ -59,39 +67,41 @@ async function getData() {
       lista.push({ titlu: e.curs.titlu, progres: e.progresPct, status: e.status });
       cursuriPerAngajat.set(e.angajatId, lista);
     }
-    const testFinalPerAngajat = new Map(testFinalRezultate.map((r) => [r.angajatId, r]));
+
+    const testeFinalePerAngajat = new Map<string, TestFinalRand[]>();
+    for (const r of testFinalRezultate) {
+      const lista = testeFinalePerAngajat.get(r.angajatId) ?? [];
+      let intrebari: IntrebareDetaliuRand[] = [];
+      if (r.raspunsuriDetaliu) {
+        try {
+          intrebari = JSON.parse(r.raspunsuriDetaliu) as IntrebareDetaliuRand[];
+        } catch {
+          intrebari = [];
+        }
+      }
+      lista.push({
+        cursTitlu: r.testFinal.curs.titlu,
+        scor: r.scor,
+        dinTotal: r.dinTotal,
+        promovat: r.promovat,
+        semnatura: r.semnatura,
+        intrebari,
+      });
+      testeFinalePerAngajat.set(r.angajatId, lista);
+    }
 
     const rows = enrollments
       .filter((e) => e.curs.titlu.includes("anti-mita") || e.curs.titlu.includes("Sistemul"))
-      .map((e) => {
-        const tf = testFinalPerAngajat.get(e.angajatId);
-        return {
-          nume: e.angajat.prenume + " " + e.angajat.nume,
-          functie: e.angajat.functie,
-          structura: e.angajat.structura.nume,
-          progres: e.progresPct,
-          status: e.status,
-          scor: "—",
-          cursuri: cursuriPerAngajat.get(e.angajatId) ?? [],
-          testFinal: tf
-            ? {
-                scor: tf.scor,
-                dinTotal: tf.dinTotal,
-                promovat: tf.promovat,
-                semnatura: tf.semnatura,
-                intrebari: tf.raspunsuriDetaliu
-                  ? (() => {
-                      try {
-                        return JSON.parse(tf.raspunsuriDetaliu) as IntrebareDetaliuRand[];
-                      } catch {
-                        return [];
-                      }
-                    })()
-                  : [],
-              }
-            : null,
-        };
-      });
+      .map((e) => ({
+        nume: e.angajat.prenume + " " + e.angajat.nume,
+        functie: e.angajat.functie,
+        structura: e.angajat.structura.nume,
+        progres: e.progresPct,
+        status: e.status,
+        scor: "—",
+        cursuri: cursuriPerAngajat.get(e.angajatId) ?? [],
+        testeFinale: testeFinalePerAngajat.get(e.angajatId) ?? [],
+      }));
 
     return {
       totalAngajati: totalAngajati || 1284,
@@ -102,7 +112,7 @@ async function getData() {
       testeCount: teste || 152,
       cursuriList,
       rows: rows.length ? rows : FALLBACK_ROWS,
-      testFinal,
+      testeFinaleSumar,
     };
   } catch {
     return {
@@ -114,7 +124,7 @@ async function getData() {
       testeCount: 152,
       cursuriList: [] as { id: string; titlu: string }[],
       rows: FALLBACK_ROWS,
-      testFinal,
+      testeFinaleSumar,
     };
   }
 }
@@ -198,7 +208,7 @@ export default async function AdminPage() {
                         <DescarcaRaportAngajat
                           angajat={{ nume: r.nume, functie: r.functie, structura: r.structura }}
                           cursuri={r.cursuri}
-                          testFinal={r.testFinal}
+                          testeFinale={r.testeFinale}
                         />
                       </td>
                     </tr>
@@ -246,17 +256,14 @@ export default async function AdminPage() {
               </div>
               <div className="flex items-center justify-between border-t border-slate-100 pt-4">
                 <div className="flex items-center gap-2 text-sm text-slate-700">
-                  <ClipboardCheck size={16} /> Test general
-                  {data.testFinal ? (
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${data.testFinal.activ ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                      {data.testFinal.activ ? "Activ" : "Inactiv"}
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Neconfigurat</span>
-                  )}
+                  <ClipboardCheck size={16} /> Teste finale
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                    {data.testeFinaleSumar.active} active
+                  </span>
+                  <span className="text-xs text-slate-400">din {data.testeFinaleSumar.total} cursuri</span>
                 </div>
                 <Link href="/admin/testare" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-700">
-                  {data.testFinal ? "Configureaza" : "Adauga test general"}
+                  Vezi toate
                 </Link>
               </div>
             </div>
