@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Play, CheckCircle2 } from "lucide-react";
 import { marcheazaVizualizat } from "@/app/dashboard/actions";
 
@@ -30,6 +31,7 @@ export function VideoMaterial({
   const [secunde, setSecunde] = useState(0);
   const [deblocat, setDeblocat] = useState(vizualizatInitial);
   const [salvat, setSalvat] = useState(vizualizatInitial);
+  const router = useRouter();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -39,7 +41,10 @@ export function VideoMaterial({
           if (s + 1 >= PRAG_SECUNDE) {
             clearInterval(intervalRef.current!);
             setDeblocat(true);
-            marcheazaVizualizat(cursId).then(() => setSalvat(true));
+            marcheazaVizualizat(cursId).then(() => {
+              setSalvat(true);
+              router.refresh();
+            });
             return PRAG_SECUNDE;
           }
           return s + 1;
