@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 const MAX_BYTES = 2 * 1024 * 1024;
-const MAX_MATERIAL_BYTES = 8 * 1024 * 1024;
+const MAX_MATERIAL_BYTES = 20 * 1024 * 1024;
 
 export async function incarcaFotoProfil(formData: FormData) {
   const file = formData.get("foto") as File | null;
