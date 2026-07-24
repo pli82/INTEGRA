@@ -22,12 +22,24 @@ async function getData(cursId: string) {
           where: { angajatId_cursId: { angajatId: angajat.id, cursId: curs.id } },
         })
       : null;
+    const testFinalRaw = await prisma.testFinal.findUnique({ where: { cursId: curs.id } });
+    const testFinal = testFinalRaw && testFinalRaw.activ ? { id: testFinalRaw.id, titlu: testFinalRaw.titlu, nrIntrebari: testFinalRaw.nrIntrebari } : null;
+    const rezultatTestFinal =
+      angajat && testFinal
+        ? await prisma.testFinalResult.findUnique({
+            where: { testFinalId_angajatId: { testFinalId: testFinal.id, angajatId: angajat.id } },
+          })
+        : null;
     return {
       angajat: angajat
         ? { nume: angajat.prenume + " " + angajat.nume, functie: angajat.functie, fotoUrl: angajat.fotoUrl }
         : { nume: "Andrei Popescu", functie: "Consilier", fotoUrl: null as string | null },
       curs,
       enrollment,
+      testFinal,
+      rezultatTestFinal: rezultatTestFinal
+        ? { scor: rezultatTestFinal.scor, dinTotal: rezultatTestFinal.dinTotal, promovat: rezultatTestFinal.promovat }
+        : null,
     };
   } catch {
     return null;
@@ -49,7 +61,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
     );
   }
 
-  const { angajat, curs, enrollment } = data;
+  const { angajat, curs, enrollment, testFinal, rezultatTestFinal } = data;
   const vizualizat = enrollment?.vizualizat ?? false;
   const pct = enrollment?.progresPct ?? 0;
   const finalizate = enrollment?.lectiiFinal ?? 0;
@@ -164,6 +176,33 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
                 </p>
               )}
             </div>
+
+            {testFinal && (
+              <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
+                <h2 className="mb-3 text-base font-medium text-slate-900">Test final</h2>
+                {rezultatTestFinal ? (
+                  <div
+                    className={
+                      rezultatTestFinal.promovat
+                        ? "rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                        : "rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                    }
+                  >
+                    {rezultatTestFinal.promovat ? "Promovat" : "Respins"} — {rezultatTestFinal.scor}/{rezultatTestFinal.dinTotal}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-xs text-slate-500">{testFinal.nrIntrebari} intrebari, alese aleatoriu din testul intermediar.</p>
+                    <Link
+                      href={"/dashboard/cursuri/" + curs.id + "/test-final"}
+                      className="block w-full rounded-lg bg-blue-700 py-2 text-center text-sm font-medium text-white hover:bg-blue-800"
+                    >
+                      Incepe testul final
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
