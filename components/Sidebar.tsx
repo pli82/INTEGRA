@@ -1,124 +1,128 @@
-"use client";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Home,
+  BookOpen,
+  LineChart,
+  ClipboardCheck,
+  Folder,
+  Settings,
+  Vote,
+  LogOut,
+  Award,
+} from "lucide-react";
+import clsx from "clsx";
+import { AvatarUpload } from "./AvatarUpload";
+import { logout } from "@/app/auth/actions";
 
-import { Download } from "lucide-react";
-import { inregistreazaFontRomanesc } from "@/lib/pdfFont";
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+};
 
-type IntrebareDetaliu = { enunt: string; raspunsAles: string; raspunsCorect: string; corect: boolean };
-
-export function DescarcaCertificatFinal({
-  angajat,
-  cursTitlu,
-  titluTest,
-  data,
-  scor,
-  dinTotal,
-  promovat,
-  semnatura,
-  intrebari,
+export function Sidebar({
+  variant,
+  activeHref,
+  userName,
+  userRole,
+  fotoUrl,
 }: {
-  angajat: { nume: string; prenume: string; functie: string; structura: string };
-  cursTitlu: string;
-  titluTest: string;
-  data: string;
-  scor: number;
-  dinTotal: number;
-  promovat: boolean;
-  semnatura: string;
-  intrebari: IntrebareDetaliu[];
+  variant: "angajat" | "admin";
+  activeHref: string;
+  userName?: string;
+  userRole?: string;
+  fotoUrl?: string | null;
 }) {
-  const genereaza = async () => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-    inregistreazaFontRomanesc(doc);
-    const marginX = 15;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const maxWidth = pageWidth - marginX * 2;
-    let y = 20;
+  const angajatNav: NavItem[] = [
+    { href: "/dashboard", label: "Acasă", icon: <Home size={18} /> },
+    { href: "/dashboard/cursuri", label: "Cursurile mele", icon: <BookOpen size={18} /> },
+    { href: "/dashboard/progres", label: "Progres", icon: <LineChart size={18} /> },
+    { href: "/dashboard/testare", label: "Testare", icon: <ClipboardCheck size={18} /> },
+    { href: "/dashboard/certificate", label: "Certificate", icon: <Award size={18} /> },
+    { href: "/dashboard/resurse", label: "Resurse", icon: <Folder size={18} /> },
+  ];
 
-    const verificaSpatiu = (necesar: number) => {
-      if (y + necesar > pageHeight - 15) {
-        doc.addPage();
-        y = 20;
-      }
-    };
+  const adminNav: NavItem[] = [
+    { href: "/admin", label: "Panou principal", icon: <Home size={18} /> },
+    { href: "/admin/cursuri", label: "Cursuri", icon: <BookOpen size={18} /> },
+    { href: "/admin/progres", label: "Progres", icon: <LineChart size={18} /> },
+    { href: "/admin/testare", label: "Testare", icon: <ClipboardCheck size={18} /> },
+    { href: "/admin", label: "Administrare", icon: <Settings size={18} /> },
+  ];
 
-    doc.setFontSize(16);
-    doc.text(`Certificat de finalizare - ${titluTest}`, marginX, y);
-    y += 12;
-
-    doc.setFontSize(11);
-    const randuri: [string, string][] = [
-      ["Nume", angajat.nume],
-      ["Prenume", angajat.prenume],
-      ["Functie", angajat.functie],
-      ["Structura", angajat.structura],
-      ["Curs", cursTitlu],
-      ["Data sustinerii", data],
-      ["Scor obtinut", `${scor} / ${dinTotal}`],
-      ["Rezultat", promovat ? "Promovat" : "Respins"],
-    ];
-    for (const [label, valoare] of randuri) {
-      doc.text(`${label}:`, marginX, y);
-      doc.text(valoare, 70, y);
-      y += 8;
-    }
-
-    y += 4;
-    doc.text("Semnatura:", marginX, y);
-    doc.addImage(semnatura, "PNG", marginX, y + 4, 55, 22);
-    y += 34;
-
-    if (intrebari.length > 0) {
-      verificaSpatiu(10);
-      doc.setFontSize(13);
-      doc.text("Detaliu intrebari si raspunsuri", marginX, y);
-      y += 10;
-
-      doc.setFontSize(10);
-      intrebari.forEach((intr, i) => {
-        const liniiEnunt = doc.splitTextToSize(`${i + 1}. ${intr.enunt}`, maxWidth);
-        verificaSpatiu(liniiEnunt.length * 5 + 16);
-        doc.setFont("NotoSans", "bold");
-        doc.text(liniiEnunt, marginX, y);
-        y += liniiEnunt.length * 5 + 2;
-
-        doc.setFont("NotoSans", "normal");
-        const liniiRaspuns = doc.splitTextToSize(`Raspuns dat: ${intr.raspunsAles}`, maxWidth);
-        verificaSpatiu(liniiRaspuns.length * 5 + 14);
-        doc.text(liniiRaspuns, marginX, y);
-        y += liniiRaspuns.length * 5;
-
-        if (intr.corect) {
-          doc.setTextColor(22, 163, 74);
-          doc.text("CORECT", marginX, y);
-        } else {
-          doc.setTextColor(220, 38, 38);
-          doc.text("GRESIT", marginX, y);
-        }
-        doc.setTextColor(0, 0, 0);
-        y += 5;
-
-        if (intr.raspunsCorect) {
-          const liniiCorect = doc.splitTextToSize(`Raspuns corect: ${intr.raspunsCorect}`, maxWidth);
-          verificaSpatiu(liniiCorect.length * 5 + 8);
-          doc.text(liniiCorect, marginX, y);
-          y += liniiCorect.length * 5;
-        }
-        y += 6;
-      });
-    }
-
-    doc.save(`certificat-test-final-${cursTitlu.replace(/\s+/g, "-")}-${angajat.nume}-${angajat.prenume}.pdf`);
-  };
+  const nav = variant === "admin" ? adminNav : angajatNav;
 
   return (
-    <button
-      type="button"
-      onClick={genereaza}
-      className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-    >
-      <Download size={13} /> Descarca certificat PDF
-    </button>
+    <aside className="flex h-full w-[248px] shrink-0 flex-col justify-between bg-[#0B1541] px-4 py-6 text-white">
+      <div>
+        <div className="mb-8 flex items-center gap-3 px-2">
+          {variant === "admin" ? (
+            <ShieldCheck size={30} className="shrink-0" />
+          ) : (
+            <Vote size={30} className="shrink-0" />
+          )}
+          <div className="leading-tight">
+            <div className="text-sm font-medium text-white">
+              {variant === "admin" ? "SMAM Instruire" : "AEP"}
+            </div>
+            {variant !== "admin" && (
+              <div className="text-xs text-white/60">SMAM Instruire</div>
+            )}
+          </div>
+        </div>
+
+        <nav className="flex flex-col gap-1">
+          {nav.map((item) => {
+            const active = item.href === activeHref;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={clsx(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  active
+                    ? "bg-white/10 font-medium text-white"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {userName && (
+        <div className="flex flex-col gap-2 border-t border-white/10 px-2 pt-4 text-sm">
+          <div className="flex items-center gap-2">
+            {variant === "angajat" ? (
+              <AvatarUpload nume={userName} fotoUrl={fotoUrl} />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                {userName
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")}
+              </div>
+            )}
+            <div className="leading-tight">
+              <div className="font-medium text-white">{userName}</div>
+              <div className="text-xs text-white/60">{userRole}</div>
+            </div>
+          </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-white/60 hover:bg-white/5 hover:text-white"
+            >
+              <LogOut size={14} /> Deconectare
+            </button>
+          </form>
+        </div>
+      )}
+    </aside>
   );
 }
