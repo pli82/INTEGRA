@@ -6,6 +6,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { prisma } from "@/lib/prisma";
 import { adaugaMaterial, stergeMaterial } from "@/app/dashboard/actions";
 import { stergeIntrebare } from "./actions";
+import { adaugaCapitol, stergeCapitol } from "./capitoleActions";
 import { stergeCurs } from "@/app/admin/cursuri/actions";
 import { IntrebareForm } from "./IntrebareForm";
 import { TestFinalForm } from "@/app/admin/testare/TestFinalForm";
@@ -13,7 +14,7 @@ import { TestIntermediarForm } from "@/app/admin/testare/TestIntermediarForm";
 
 async function getData(cursId: string) {
   try {
-    const curs = await prisma.curs.findUnique({ where: { id: cursId }, include: { lectii: { orderBy: { ordine: "asc" } }, materiale: { orderBy: { createdAt: "desc" } }, intrebari: { orderBy: { ordine: "asc" }, include: { optiuni: true } } } });
+    const curs = await prisma.curs.findUnique({ where: { id: cursId }, include: { lectii: { orderBy: { ordine: "asc" }, include: { materiale: { orderBy: { createdAt: "desc" } } } }, materiale: { where: { lectieId: null }, orderBy: { createdAt: "desc" } }, intrebari: { orderBy: { ordine: "asc" }, include: { optiuni: true } } } });
     if (!curs) return null;
     const totalInscrisi = await prisma.enrollment.count({ where: { cursId } });
     const totalPromovati = await prisma.enrollment.count({ where: { cursId, status: "PROMOVAT" } });
@@ -76,10 +77,80 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
           <div className="rounded-xl border border-slate-200 bg-white p-4 text-center"><div className="text-2xl font-medium text-slate-900">{totalInscrisi}</div><div className="text-xs text-slate-500">Inscrisi</div></div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 text-center"><div className="text-2xl font-medium text-emerald-600">{totalPromovati}</div><div className="text-xs text-slate-500">Promovati</div></div>
         </div>
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6">
+          <h2 className="mb-1 text-base font-medium text-slate-900">Capitole</h2>
+          <p className="mb-4 text-xs text-slate-400">
+            Fiecare capitol poate avea propriul material (video, PDF sau prezentare), vizibil pentru angajat la click pe titlu.
+          </p>
+          {curs.lectii.length === 0 ? (
+            <p className="mb-4 text-sm text-slate-400">Niciun capitol adaugat inca.</p>
+          ) : (
+            <div className="mb-4 flex flex-col gap-4">
+              {curs.lectii.map((l, i) => (
+                <div key={l.id} className="rounded-lg border border-slate-100 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-800">{i + 1}. {l.titlu} <span className="font-normal text-slate-400">({l.durataMin} min)</span></p>
+                    <form action={stergeCapitol.bind(null, l.id, curs.id)}>
+                      <ConfirmButton mesaj={`Stergi capitolul "${l.titlu}"? Se sterg si materialele atasate.`} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600">
+                        <Trash2 size={14} />
+                      </ConfirmButton>
+                    </form>
+                  </div>
+
+                  {l.materiale.length > 0 && (
+                    <ul className="mb-3 flex flex-col gap-2">
+                      {l.materiale.map((m) => (
+                        <li key={m.id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                          <div className="flex items-center gap-2">{iconForTip(m.tip)}<span className="text-sm text-slate-700">{m.titlu}</span></div>
+                          <form action={stergeMaterial.bind(null, m.id, curs.id)}>
+                            <ConfirmButton mesaj={`Stergi materialul "${m.titlu}"?`} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600">
+                              <Trash2 size={13} />
+                            </ConfirmButton>
+                          </form>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-blue-700 hover:underline">Adauga material la acest capitol</summary>
+                    <form action={adaugaMaterial} className="mt-3 flex flex-col gap-3">
+                      <input type="hidden" name="cursId" value={curs.id} />
+                      <input type="hidden" name="lectieId" value={l.id} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <select name="tip" defaultValue="VIDEO" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                          <option value="VIDEO">Video (link)</option>
+                          <option value="PDF">PDF</option>
+                          <option value="PPTX">Prezentare</option>
+                        </select>
+                        <input name="titlu" placeholder="Titlu material" required className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      </div>
+                      <input name="videoUrl" type="url" placeholder="Link video (https://...)" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      <input name="fisier" type="file" accept=".pdf,.ppt,.pptx" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      <button type="submit" className="self-start rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-medium text-white">Adauga materialul</button>
+                    </form>
+                  </details>
+                </div>
+              ))}
+            </div>
+          )}
+          <form action={adaugaCapitol} className="flex items-end gap-3 border-t border-slate-100 pt-4">
+            <input type="hidden" name="cursId" value={curs.id} />
+            <div className="flex-1">
+              <label className="mb-1 block text-sm text-slate-600">Titlu capitol nou</label>
+              <input name="titlu" placeholder="ex. Introducere in evaluarea riscurilor" required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+            </div>
+            <div className="w-28">
+              <label className="mb-1 block text-sm text-slate-600">Minute</label>
+              <input name="durataMin" type="number" min={1} defaultValue={10} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+            </div>
+            <button type="submit" className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white">Adauga capitol</button>
+          </form>
+        </div>
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col gap-6">
             <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-4 text-base font-medium text-slate-900">Materiale existente</h2>
+              <h2 className="mb-4 text-base font-medium text-slate-900">Materiale generale curs <span className="text-sm font-normal text-slate-400">(fara capitol asociat)</span></h2>
               {curs.materiale.length === 0 ? <p className="text-sm text-slate-400">Niciun material adaugat inca.</p> : (
                 <ul className="flex flex-col gap-2">{curs.materiale.map((m) => (<li key={m.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3"><div className="flex items-center gap-3">{iconForTip(m.tip)}<span className="text-sm text-slate-700">{m.titlu}</span></div><form action={stergeMaterial.bind(null, m.id, curs.id)}><ConfirmButton mesaj={`Stergi materialul "${m.titlu}"?`} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></ConfirmButton></form></li>))}</ul>
               )}
