@@ -27,6 +27,8 @@ export async function incarcaFotoProfil(formData: FormData) {
 
 export async function adaugaMaterial(formData: FormData): Promise<void> {
   const cursId = formData.get("cursId") as string;
+  const lectieIdRaw = (formData.get("lectieId") as string || "").trim();
+  const lectieId = lectieIdRaw || null;
   const tip = formData.get("tip") as "VIDEO" | "PDF" | "PPTX";
   const titlu = (formData.get("titlu") as string || "").trim();
   const videoUrl = (formData.get("videoUrl") as string || "").trim();
@@ -43,7 +45,7 @@ export async function adaugaMaterial(formData: FormData): Promise<void> {
     const base64 = Buffer.from(bytes).toString("base64");
     url = `data:${file.type};base64,${base64}`;
   }
-  await prisma.material.create({ data: { cursId, tip, titlu, url } });
+  await prisma.material.create({ data: { cursId, lectieId, tip, titlu, url } });
   revalidatePath(`/dashboard/cursuri/${cursId}`);
   revalidatePath(`/admin/cursuri/${cursId}`);
 }
