@@ -4,8 +4,7 @@ import { Video, FileText, Presentation, Trash2, ArrowLeft } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { prisma } from "@/lib/prisma";
-import { stergeMaterial } from "@/app/dashboard/actions";
-import { AdaugaMaterialForm } from "@/components/AdaugaMaterialForm";
+import { adaugaMaterial, stergeMaterial } from "@/app/dashboard/actions";
 import { stergeIntrebare } from "./actions";
 import { adaugaCapitol, stergeCapitol } from "./capitoleActions";
 import { stergeCurs } from "@/app/admin/cursuri/actions";
@@ -115,9 +114,22 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
 
                   <details className="text-xs">
                     <summary className="cursor-pointer text-blue-700 hover:underline">Adauga material la acest capitol</summary>
-                    <div className="mt-3">
-                      <AdaugaMaterialForm cursId={curs.id} lectieId={l.id} />
-                    </div>
+                    <form action={adaugaMaterial} className="mt-3 flex flex-col gap-3">
+                      <input type="hidden" name="cursId" value={curs.id} />
+                      <input type="hidden" name="lectieId" value={l.id} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <select name="tip" defaultValue="VIDEO" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                          <option value="VIDEO">Video (link)</option>
+                          <option value="PDF">PDF</option>
+                          <option value="PPTX">Prezentare</option>
+                        </select>
+                        <input name="titlu" placeholder="Titlu material" required className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      </div>
+                      <input name="videoUrl" type="url" placeholder="Link video (https://...)" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      <input name="fisier" type="file" accept=".pdf,.ppt,.pptx" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" />
+                      <p className="text-[11px] text-slate-400">Fisier maxim 3MB (limita platformei de gazduire).</p>
+                      <button type="submit" className="self-start rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-medium text-white">Adauga materialul</button>
+                    </form>
                   </details>
                 </div>
               ))}
@@ -146,7 +158,14 @@ export default async function AdminCursPage({ params }: { params: Promise<{ curs
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-4 text-base font-medium text-slate-900">Adauga material nou</h2>
-              <AdaugaMaterialForm cursId={curs.id} />
+              <form action={adaugaMaterial} className="flex flex-col gap-4">
+                <input type="hidden" name="cursId" value={curs.id} />
+                <div><label className="mb-1 block text-sm text-slate-600">Tip material</label><select name="tip" defaultValue="VIDEO" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"><option value="VIDEO">Video (link)</option><option value="PDF">PDF</option><option value="PPTX">Prezentare</option></select></div>
+                <div><label className="mb-1 block text-sm text-slate-600">Titlu</label><input name="titlu" placeholder="Titlu material" required className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" /></div>
+                <div><label className="mb-1 block text-sm text-slate-600">Link video</label><input name="videoUrl" type="url" placeholder="https://..." className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" /></div>
+                <div><label className="mb-1 block text-sm text-slate-600">Fisier (PDF/PPTX, max 3MB)</label><input name="fisier" type="file" accept=".pdf,.ppt,.pptx" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700" /></div>
+                <button type="submit" className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white">Adauga materialul</button>
+              </form>
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-6">
