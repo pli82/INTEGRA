@@ -20,11 +20,13 @@ export function VideoMaterial({
   url,
   titlu,
   cursId,
+  lectieId,
   vizualizatInitial,
 }: {
   url: string;
   titlu: string;
   cursId: string;
+  lectieId?: string;
   vizualizatInitial: boolean;
 }) {
   const [pornit, setPornit] = useState(false);
@@ -41,7 +43,7 @@ export function VideoMaterial({
           if (s + 1 >= PRAG_SECUNDE) {
             clearInterval(intervalRef.current!);
             setDeblocat(true);
-            marcheazaVizualizat(cursId).then(() => {
+            marcheazaVizualizat(cursId, lectieId).then(() => {
               setSalvat(true);
               router.refresh();
             });
@@ -54,7 +56,7 @@ export function VideoMaterial({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [pornit, deblocat, cursId]);
+  }, [pornit, deblocat, cursId, lectieId]);
 
   const ytId = isYouTube(url) ? getYouTubeId(url) : null;
 

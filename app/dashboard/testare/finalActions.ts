@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/app/auth/actions";
 import { revalidatePath } from "next/cache";
+import { recalculeazaProgres } from "@/app/dashboard/actions";
 
 const PRAG_PROMOVARE = 10;
 
@@ -51,6 +52,8 @@ export async function finalizeazaTestFinal(
       raspunsuriDetaliu: JSON.stringify(input.raspunsuriDetaliu),
     },
   });
+
+  await recalculeazaProgres(angajat.id, testFinal.cursId);
 
   revalidatePath("/dashboard/testare");
   revalidatePath(`/dashboard/cursuri/${testFinal.cursId}`);

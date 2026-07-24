@@ -75,7 +75,51 @@ export async function stergeMaterial(materialId: string, cursId: string): Promis
   revalidatePath(`/admin/cursuri/${cursId}`);
 }
 
-export async function marcheazaVizualizat(cursId: string): Promise<void> {
+export async function recalculeazaProgres(angajatId: string, cursId: string): Promise<void> {
+  const curs = await prisma.curs.findUnique({ where: { id: cursId }, include: { lectii: true } });
+  if (!curs) return;
+  const testFinal = await prisma.testFinal.findUnique({ where: { cursId } });
+
+  const capitoleReale = curs.lectii.filter((l) => l.titlu !== "Test intermediar");
+  const totalCapitole = capitoleReale.length;
+
+  const progrese = totalCapitole > 0
+    ? await prisma.lectieProgres.count({
+        where: { angajatId, lectieId: { in: capitoleReale.map((l) => l.id) }, vizualizat: true },
+      })
+    : 0;
+
+  const progresPct = totalCapitole > 0 ? Math.round((progrese / totalCapitole) * 100) : 0;
+
+  let status: "NEINCEPUT" | "IN_CURS" | "PROMOVAT" | "RESPINS" = "NEINCEPUT";
+  if (progrese > 0) status = "IN_CURS";
+  if (totalCapitole > 0 && progrese === totalCapitole) {
+    if (testFinal && testFinal.activ) {
+      const rezultatFinal = await prisma.testFinalResult.findUnique({
+        where: { testFinalId_angajatId: { testFinalId: testFinal.id, angajatId } },
+      });
+      status = rezultatFinal ? (rezultatFinal.promovat ? "PROMOVAT" : "RESPINS") : "IN_CURS";
+    } else {
+      status = "PROMOVAT";
+    }
+  }
+
+  await prisma.enrollment.upsert({
+    where: { angajatId_cursId: { angajatId, cursId } },
+    create: { angajatId, cursId, progresPct, lectiiFinal: progrese, status, vizualizat: progrese > 0 },
+    update: { progresPct, lectiiFinal: progrese, status },
+  });
+
+  revalidatePath(`/dashboard/cursuri/${cursId}`);
+  revalidatePath("/dashboard/cursuri");
+  revalidatePath("/dashboard/progres");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/testare");
+  revalidatePath("/admin");
+  revalidatePath("/admin/progres");
+}
+
+export async function marcheazaVizualizat(cursId: string, lectieId?: string): Promise<void> {
   const angajat = await getSession();
   if (!angajat) return;
   await prisma.enrollment.upsert({
@@ -83,6 +127,25 @@ export async function marcheazaVizualizat(cursId: string): Promise<void> {
     create: { angajatId: angajat.id, cursId, vizualizat: true },
     update: { vizualizat: true },
   });
+  if (lectieId) {
+    await prisma.lectieProgres.upsert({
+      where: { angajatId_lectieId: { angajatId: angajat.id, lectieId } },
+      create: { angajatId: angajat.id, lectieId, vizualizat: true, vizualizatLa: new Date() },
+      update: { vizualizat: true, vizualizatLa: new Date() },
+    });
+    await recalculeazaProgres(angajat.id, cursId);
+  }
   revalidatePath(`/dashboard/cursuri/${cursId}`);
   revalidatePath("/dashboard/testare");
+}
+
+export async function marcheazaCapitolVizualizat(cursId: string, lectieId: string): Promise<void> {
+  const angajat = await getSession();
+  if (!angajat) return;
+  await prisma.lectieProgres.upsert({
+    where: { angajatId_lectieId: { angajatId: angajat.id, lectieId } },
+    create: { angajatId: angajat.id, lectieId, vizualizat: true, vizualizatLa: new Date() },
+    update: { vizualizat: true, vizualizatLa: new Date() },
+  });
+  await recalculeazaProgres(angajat.id, cursId);
 }

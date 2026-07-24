@@ -82,7 +82,7 @@ export default async function CursDetaliuPage({ params }: { params: Promise<{ cu
 
         <div className="mb-8 flex items-center gap-3">
           <div className="flex-1"><ProgressBar pct={pct} /></div>
-          <span className="text-xs text-slate-500">{pct}% · {finalizate}/{curs.lectii.length} lectii</span>
+          <span className="text-xs text-slate-500">{pct}% · {finalizate}/{curs.lectii.filter((l) => l.titlu !== "Test intermediar").length} lectii</span>
         </div>
 
         <div className="mb-6">

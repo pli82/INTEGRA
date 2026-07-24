@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Presentation, Lock } from "lucide-react";
 import { VideoMaterial } from "./VideoMaterial";
+import { marcheazaCapitolVizualizat } from "@/app/dashboard/actions";
 
 type MaterialItem = { id: string; tip: "VIDEO" | "PDF" | "PPTX"; titlu: string; url: string };
 type Lectie = { id: string; titlu: string; durataMin: number; materiale: MaterialItem[] };
@@ -23,7 +24,8 @@ export function CapitoleViewer({
   const [selectedId, setSelectedId] = useState<string | null>(capitoleNormale[0]?.id ?? null);
   const selected = capitoleNormale.find((l) => l.id === selectedId) ?? null;
 
-  const deschideMaterial = (url: string) => {
+  const deschideMaterial = (url: string, lectieId: string) => {
+    marcheazaCapitolVizualizat(cursId, lectieId).catch(() => {});
     if (!url.startsWith("data:")) {
       window.open(url, "_blank", "noopener,noreferrer");
       return;
@@ -120,12 +122,12 @@ export function CapitoleViewer({
             <h3 className="text-base font-medium text-slate-900">{selected.titlu}</h3>
             {selected.materiale.map((m) =>
               m.tip === "VIDEO" ? (
-                <VideoMaterial key={m.id} url={m.url} titlu={m.titlu} cursId={cursId} vizualizatInitial={vizualizat} />
+                <VideoMaterial key={m.id} url={m.url} titlu={m.titlu} cursId={cursId} lectieId={selected.id} vizualizatInitial={vizualizat} />
               ) : (
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => deschideMaterial(m.url)}
+                  onClick={() => deschideMaterial(m.url, selected.id)}
                   className={
                     "group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl text-left " +
                     (m.tip === "PDF"

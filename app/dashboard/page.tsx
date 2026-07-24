@@ -48,7 +48,7 @@ async function getData() {
       icon: e.curs.icon,
       pct: e.progresPct,
       finalizate: e.lectiiFinal,
-      total: e.curs.lectii.length,
+      total: e.curs.lectii.filter((l) => l.titlu !== "Test intermediar").length,
     }));
 
     const activitate = await prisma.activitateLog.findMany({
