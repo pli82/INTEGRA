@@ -70,8 +70,9 @@ export function AdaugaMaterialForm({
         if (fisierRef.current) fisierRef.current.value = "";
         setSucces(true);
       }
-    } catch {
-      setEroare("Eroare la incarcarea fisierului. Incearca din nou.");
+    } catch (err) {
+      const mesaj = err instanceof Error ? err.message : "eroare necunoscuta";
+      setEroare(`Detaliu eroare: ${mesaj}`);
     } finally {
       setSeIncarca(false);
     }
